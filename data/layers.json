@@ -1,0 +1,137 @@
+{
+"sfondo" : {
+"img":"sfondo.png",
+"xof": 0,
+"yof": 0
+},
+"sveglia_2" : {
+"img":"sveglia_2.png",
+"xof": 0,
+"yof": 0
+},
+"sveglia_1" : {
+"img":"sveglia_1.png",
+"xof": 0,
+"yof": 0
+},
+"sveglia_0" : {
+"img":"placeholder.png",
+"xof": 16,
+"yof": 12
+},
+"allarme_1" : {
+"img":"allarme_1.png",
+"xof": 29,
+"yof": 2
+},
+"allarme_0" : {
+"img":"placeholder.png",
+"xof": 34,
+"yof": 8
+},
+"gatto_1" : {
+"img":"gatto_1.png",
+"xof": 16,
+"yof": 110
+},
+"gatto_2" : {
+"img":"gatto_2.png",
+"xof": 20,
+"yof": 121
+},
+"gatto_3" : {
+"img":"gatto_3.png",
+"xof": 20,
+"yof": 121
+},
+"gatto_4" : {
+"img":"gatto_4.png",
+"xof": 20,
+"yof": 134
+},
+"gatto_5" : {
+"img":"gatto_5.png",
+"xof": 20,
+"yof": 137
+},
+"gatto_0" : {
+"img":"placeholder.png",
+"xof": 28,
+"yof": 149
+},
+"lazer_N" : {
+"img":"lazer_N.png",
+"xof": 18,
+"yof": 93
+},
+"lazer_NE" : {
+"img":"lazer_NE.png",
+"xof": 18,
+"yof": 95
+},
+"lazer_S" : {
+"img":"lazer_S.png",
+"xof": 18,
+"yof": 98
+},
+"lazer_SO" : {
+"img":"lazer_SO.png",
+"xof": 15,
+"yof": 98
+},
+"lazer_NO" : {
+"img":"lazer_NO.png",
+"xof": 15,
+"yof": 95
+},
+"lazer_SE" : {
+"img":"lazer_SE.png",
+"xof": 18,
+"yof": 98
+},
+"lazer_E" : {
+"img":"lazer_E.png",
+"xof": 18,
+"yof": 98
+},
+"lazer_O" : {
+"img":"lazer_O.png",
+"xof": 13,
+"yof": 98
+},
+"lazer_0" : {
+"img":"placeholder.png",
+"xof": 18,
+"yof": 98
+},
+"fire_1" : {
+"img":"placeholder.png",
+"xof": 28,
+"yof": 118
+},
+"fire_2" : {
+"img":"placeholder.png",
+"xof": 44,
+"yof": 128
+},
+"fire_3" : {
+"img":"placeholder.png",
+"xof": 44,
+"yof": 128
+},
+"fire_4" : {
+"img":"placeholder.png",
+"xof": 48,
+"yof": 143
+},
+"cake_1" : {
+"img":"cake_1.png",
+"xof": 116,
+"yof": 121
+},
+"cake_0" : {
+"img":"placeholder.png",
+"xof": 171,
+"yof": 218
+}
+}
