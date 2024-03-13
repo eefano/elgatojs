@@ -347,13 +347,13 @@ function load()
    );
 
    preload(Audio, sounds,
-    "boom.ogg",
-    "die.ogg",
-    "hit.ogg",
-    "ingame.ogg",
-    "ring.ogg",
-    "shot.ogg",
-    "win.ogg",
+    "boom.mp3",
+    "die.mp3",
+    "hit.mp3",
+    "ingame.mp3",
+    "ring.mp3",
+    "shot.mp3",
+    "win.mp3",
     );
 
     fetch("data/layers.json")
