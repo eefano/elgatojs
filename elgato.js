@@ -1,330 +1,159 @@
+var xres, yres, canvas, ctx;
+var keystate = [];
+var keyqueue = [];
 
-var xres,yres,canvas,ctx;
-var keys = [];
-var field = [];
-var tick = 0;
+var points = 0;
+var win = false;
 
-var stab = [];
-var ctab = [];
+var bkglayer = new Set();
+var moblayer = new Set();
+var catlayer = new Set();
+var shtlayer = new Set();
+var movers = new Set();
+var removers = new Set();
 
-var TABSIZE = 2048, TABAND = 2047, T_PI = 1024, T_PI2 = 512;
-var MAXTICK = 100000;
+function inset(o, ...sets) {
+  for (var j = 0; j < sets.length; j++) {
+    sets[j].add(o);
+    o.sets.add(sets[j]);
+  }
+}
 
-var isplay,nplay,pizzax,pizzay,pizzar;
-var wall,worm,pizza,air;
+function sfondo(xstart) {
+  var o = {
+    sets: new Set(),
+    shift: 0,
+    pos: [xstart, 0],
+    visible: true,
+    pose: poses.sfondo,
+    base: poses.sfondo,
+    movefunc: (o) => {
+      o.shift++;
+      if (o.shift >= xres) o.shift = 0;
+      o.pos[0] = xstart - o.shift;
+    },
+  };
+  inset(o, bkglayer, movers);
+}
 
-var keymap = [];
-var play = [];
+function cat() {
+  var o = {
+    sets: new Set(),
+    lives: 9,
+    jumping: false,
+    crouching: false,
+    invulnerable: false,
+    dead: false,
+    invuln: 0,
+    pos: [40, 220],
+    jumpstart: 0,
+    pose: poses.gatto_0,
+    base: poses.gatto_0,
+    visible: true,
+    movefunc: (o) => {
+        removers.add(o);
+    },
+  };
+  inset(o, catlayer, movers);
+}
 
-function calctab()
-{
-    var x;
-    for(x=0;x<TABSIZE;x++)
-    {
-        stab[x]=Math.sin(Math.PI*x/T_PI);
-        ctab[x]=Math.cos(Math.PI*x/T_PI);
+function carcass() {}
+
+function drawlayers(...layers) {
+  for (var j = 0; j < layers.length; j++) {
+    var layer = layers[j];
+    for (const o of layer) {
+      if (o.visible) {
+        ctx.drawImage(
+          images[o.pose.img],
+          o.pos[0] + o.pose.xof - o.base.xof,
+          o.pos[1] + o.pose.yof - o.base.yof
+        );
+      }
     }
+  }
 }
 
-function getPixel(x,y)
-{
-    if(x<0 || y<0 || x>=xres || y>=yres) return -1;
-    return field[Math.floor(x)+Math.floor(y)*xres];
+function step() {
+  drawlayers(bkglayer, moblayer, catlayer, shtlayer);
+
+  for (const o of movers) {
+    o.movefunc(o);
+  }
+
+  for (const o of removers) {
+    for (const s of o.sets) s.delete(o);
+  }
+  removers.clear();
+
+  ctx.font = "8px ElGato";
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.strokeText("Hello world", 11.5, 50.5);
+  ctx.fillStyle = "orangered";
+  ctx.fillText("Hello world", 11.5, 50.5);
+
+  window.requestAnimationFrame(step);
 }
 
-function setPixel(x,y,v)
-{
-    if(x<0 || y<0 || x>=xres || y>=yres) return;
-    field[Math.floor(x)+Math.floor(y)*xres]=v;
+function init() {
+  points = 0;
+  win = false;
+  sfondo(0);
+  sfondo(xres);
+  cat();
 }
 
-function check(o,x,y)
-{
-    var p = getPixel(x,y);
-    if(p) o.push(p);
-}
-function draw(o,x,y)
-{
-    ctx.putImageData(o.i,x,y);
-    setPixel(x,y,o.v);
-}
+function resize() {
+  var h = window.innerHeight;
+  var w = window.innerWidth;
 
-function wormLambda(f,o,x,y)
-{
-    f(o,x,y);
-    f(o,x-1,y);
-    f(o,x+1,y);
-    f(o,x,y-1);
-    f(o,x,y+1);
-}
-function circleLambda(f,o,x,y,xc,yc)
-{
-    f(o,x+xc,y+yc);
-    f(o,x+xc,yc-y);
-    f(o,xc-x,yc-y);
-    f(o,xc-x,y+yc);
-    f(o,y+xc,x+yc);
-    f(o,y+xc,yc-x);
-    f(o,xc-y,yc-x);
-    f(o,xc-y,x+yc);
-}
-function pizzaLambda(f,o,xc,yc,ray)
-{
-    var x,y,delta;
-    y=ray;
-    delta=3-(ray*2);
-    for(x=0;x<y;)
-    {
-        circleLambda(f,o,x,y,xc,yc);
-        if(delta<0) delta+=4*x+6;
-        else
-        {
-            delta+=4*(x-y)+10;
-            y--;
-        }
-        x++;
-    }
-    x=y;
-    if(y!=0)
-    {
-        circleLambda(f,o,x,y,xc,yc);
-    }
+  var kx = Math.floor(w / xres);
+  var ky = Math.floor(h / yres);
+  var k = 1;
+
+  if (kx < ky) {
+    if (kx > 1) k = kx;
+    else k = 1;
+  } else {
+    if (ky > 1) k = ky;
+    else k = 1;
+  }
+
+  canvas.style.width = xres * k + "px";
+  canvas.style.height = yres * k + "px";
 }
 
-function deletePizza()
-{
-    pizzaLambda(draw,{i:air},pizzax,pizzay,pizzar);
+function keypress(e) {
+  keyqueue.push(e);
+  return false;
 }
 
-function scorestring(player,i)
-{
-    return "PL"+i+":"+player.cdim;
+function keydown(e) {
+  keystate[e.keyCode] = true;
+  return false;
 }
-
-function playersLambda(f)
-{
-    var i;
-    var res = [];
-    for(i=0;i<nplay;i++)
-    {
-        res[i] = f(play[i],i);
-    }
-    return res;
-}
-
-function putstatus(s)
-{
-    document.title = s.concat(" - ",playersLambda(scorestring));
-}
-
-
-
-function placePizza()
-{
-    putstatus("");
-    for(;;)
-    {
-        var coll = [];
-        var r = Math.floor(Math.random() * 7) + 3;
-        var x = Math.floor(Math.random() * (xres-r*2)) + r;
-        var y = Math.floor(Math.random() * (yres-r*2)) + r;
-
-        pizzaLambda(check,coll,x,y,r);
-
-        if(coll.length==0)
-        {
-            pizzaLambda(draw,{i:pizza,v:-2},x,y,r);
-            pizzax=x; pizzay=y; pizzar=r;
-            return;
-        }
-    }
-}
-
-function endgame(s)
-{
-    putstatus(s);
-    isplay = false;
-}
-
-function collisions(player,n)
-{
-    var coll = [];
-    wormLambda(check,coll,player.xp,player.yp);
-
-    if(coll.indexOf(-1)>=0)
-    {
-        endgame("PLAYER "+n+" SPLATTED INTO WALL");
-    }
-    else if(coll.indexOf(-2)>=0)
-    {
-        player.cdim+=pizzar;
-        deletePizza();
-        placePizza();
-    }
-    else if(coll.length>0)
-    {
-        var i;
-        for(i=0;i<coll.length;i++)
-        {
-            if(tick-coll[i]>3)
-            {
-                endgame("PLAYER "+n+" SPLATTED INTO WORM");
-            }
-        }
-    }
-}
-
-
-function advancement(player,i)
-{
-    wormLambda(draw,{i:worm,v:tick},player.xp,player.yp);
-
-    player.cx.push(player.xp);
-    player.cy.push(player.yp);
-
-    if(player.cx.length>player.cdim)
-    {
-        var x = player.cx.shift();
-        var y = player.cy.shift();
-
-        wormLambda(draw,{i:air},x,y);
-    }
-
-    player.xp+=stab[player.ang]*0.7;
-    player.yp+=ctab[player.ang]*0.7;
-
-    if(keys[90])
-    {
-        player.ang+=32;
-        if(player.ang>=TABSIZE) player.ang-=TABSIZE;
-    }
-    if(keys[88])
-    {
-        player.ang-=32;
-        if(player.ang<0) player.ang+=TABSIZE;
-    }
-
-}
-
-function initgame(n)
-{
-    var i,x,y,d=xres/(n+1);
-
-    field = [];
-
-    ctx.fillStyle="black";
-    ctx.fillRect(0,0,xres,yres);
-
-    for(i=0,x=d,y=yres/2;i<n;i++,x+=d)
-    {
-        play[i] = {
-            xp: x,
-            yp: y,
-            cx: [],
-            cy: [],
-            ang: 0,
-            cdim: 50
-        };
-    }
-
-    nplay=n;
-    placePizza();
-    tick=1;
-    isplay=true;
-}
-
-
-function step()
-{
-    ctx.font = '8px ElGato';
-    ctx.fillStyle = 'orangered';
-    ctx.fillText('Hello world', 10, 50);
-
-    if(isplay)
-    {
-        playersLambda(collisions);
-        playersLambda(advancement);
-        tick++;
-    }
-
-    window.requestAnimationFrame(step);
-}
-
-
-function resize()
-{
-    var h = window.innerHeight;
-    var w = window.innerWidth;
-
-    var kx = Math.floor(w / xres);
-    var ky = Math.floor(h / yres);
-    var k = 1;
-
-    if(kx<ky)
-    {
-        if(kx>1) k=kx; else k=1;
-    }
-    else
-    {
-        if(ky>1) k=ky; else k=1;
-    }
-
-    canvas.style.width = (xres*k)+'px';
-    canvas.style.height = (yres*k)+'px';
-}
-
-function keypress(e)
-{
-    if(e.charCode==32)
-    {
-        initgame(1);
-    }
-/*    if(e.charCode==50)
-    {
-        initgame(2);
-    }
-    if(e.charCode==51)
-    {
-        initgame(3);
-    }
-*/
- return false;
-}
-
-function keydown(e)
-{
-    keys[e.keyCode]=true;
-    return false;
-}
-function keyup(e)
-{
-    keys[e.keyCode]=false;
-    return false;
-}
-
-function createPixel(ctx,r,g,b)
-{
-    var p = ctx.createImageData(1,1);
-    p.data[0]=r; p.data[1]=g; p.data[2]=b; p.data[3]=255;
-    return p;
+function keyup(e) {
+  keystate[e.keyCode] = false;
+  return false;
 }
 
 var sounds = {};
 var images = {};
 var poses;
 
-function preload(what, where) {
-    for (var i = 2; i < arguments.length; i++) {
-        where[arguments[i]] = new what();
-        where[arguments[i]].src = "data/" + preload.arguments[i];
-    }
+function preload(what, where, ...list) {
+  for (var i = 0; i < list.length; i++) {
+    let v = list[i];
+    where[v] = new what();
+    where[v].src = "data/" + v;
+  }
 }
 
-
-function load()
-{
-    
-  preload(Image, images, 
+async function load() {
+  preload(
+    Image,
+    images,
     "allarme_1.png",
     "cake_1.png",
     "gatto_1.png",
@@ -343,60 +172,44 @@ function load()
     "placeholder.png",
     "sfondo.png",
     "sveglia_1.png",
-    "sveglia_2.png",
-   );
+    "sveglia_2.png"
+  );
 
-   preload(Audio, sounds,
+  preload(
+    Audio,
+    sounds,
     "boom.mp3",
     "die.mp3",
     "hit.mp3",
     "ingame.mp3",
     "ring.mp3",
     "shot.mp3",
-    "win.mp3",
-    );
+    "win.mp3"
+  );
 
-    fetch("data/layers.json")
-    .then(response => response.json())
-    .then(parsed => {poses = parsed});
+  await fetch("data/layers.json")
+    .then((response) => response.json())
+    .then((parsed) => {
+      poses = parsed;
+    });
 
+  canvas = document.querySelector("canvas");
+  ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
 
-    canvas=document.querySelector('canvas');
-    ctx = canvas.getContext( '2d' );
+  xres = canvas.width;
+  yres = canvas.height;
 
-    xres = canvas.width;
-    yres = canvas.height;
+  resize();
+  canvas.focus();
 
-    /*
-    dbuf = document.createElement('canvas');
-    dbuf.width = xres;
-    dbuf.height = yres;
-    dbufctx = dbuf.getctx('2d');
-     */
+  canvas.addEventListener("keydown", keydown, true);
+  canvas.addEventListener("keyup", keyup, true);
+  canvas.addEventListener("keypress", keypress, true);
+  window.addEventListener("resize", resize);
 
-    resize();
-    canvas.focus();
+  if (document.readyState !== "loading") init();
+  else document.addEventListener("DOMContentLoaded", init);
 
-    /*
-    canvas.addEventListener('keydown',keydown,true);
-    canvas.addEventListener('keyup',keyup,true);
-    canvas.addEventListener('keypress',keypress,true);
-
-
-
-
-    pizza = createPixel(ctx,0,255,0);
-    wall = createPixel(ctx,0,0,255);
-    worm = createPixel(ctx,255,255,0);
-    air = createPixel(ctx,0,0,0);
-
-    wormLambda(draw,{i:worm},10,10);
-    pizzaLambda(draw,{i:pizza},100,100,20);
-
-    calctab();
-    endgame("PIZZA WORM - PRESS SPACE TO RESTART");
-    */
-
-    window.addEventListener('resize', resize);
-    window.requestAnimationFrame(step);
+  window.requestAnimationFrame(step);
 }
