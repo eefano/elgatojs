@@ -240,9 +240,9 @@ function step() {
   ctx.font = "8px ElGato";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
-  ctx.strokeText("Hello world Mannaggia Gesu", 11.0, 50.0);
+  ctx.strokeText("Hello world", 11.0, 50.0);
   ctx.fillStyle = "orangered";
-  ctx.fillText("Hello world Mannaggia Gesu", 11.0 + ((frame>>8)&1), 50.0);
+  ctx.fillText("Hello world", 11.0 + ((frame>>8)&1), 50.0);
   */
 
   frame++;
@@ -318,17 +318,23 @@ async function load() {
   const fshader = gl.createShader(gl.FRAGMENT_SHADER);
   gl.attachShader(program, fshader);
   gl.shaderSource(fshader, `
-  #version 100
-  void main() {
-    gl_FragColor = vec4(0.18, 0.54, 0.34, 1.0);
-  }
-  `);
+precision mediump float;
+
+float checkboard(vec2 st, float tilesize) {
+  vec2 pos = mod(st, tilesize * 2.0);
+  return mod(step(tilesize, pos.x) + step(tilesize, pos.y), 2.0);
+}
+void main(){
+    float c = checkboard(gl_FragCoord.xy, 1.0);
+    gl_FragColor = vec4(c,c,c, 1.0);
+}
+`);
   gl.compileShader(fshader);
   gl.linkProgram(program);
   gl.useProgram(program);
 
   let vertexArray = new Float32Array([
-    -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5,
+    0, 0.5, 0.5, 0.5, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0,
   ]);
 
   let vertexBuffer = gl.createBuffer();
@@ -386,24 +392,6 @@ async function load() {
     .then((parsed) => {
       poses = parsed;
     });
-
-  //let k = 1;
-
-  /*
-  gl.viewport((xres * k) / 2, (yres * k) / 2, xres * k, yres * k);
-  gl.MatrixMode(gl.PROJECTION);
-  gl.loadIdentity();
-  gl.translatef(-1.0, 1.0, 0.0);
-  gl.scalef(2.0 / xres, -2.0 / yres, 0.0);
-  gl.MatrixMode(gl.MODELVIEW);
-  gl.loadIdentity();
-  gl.Enable(gl.CULL_FACE);
-  gl.Enable(gl.TEXTURE_2D);
-  gl.Enable(gl.ALPHA_TEST);
-  gl.AlphaFunc(gl.EQUAL, gl.ONE);
-  gl.ClearColor(0.0, 0.0, 0.0, 1.0);
-  gl.Clear(gl.COLOR_BUFFER_BIT);
-  */
 
   resize();
   canvas.focus();
