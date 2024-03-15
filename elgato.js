@@ -13,6 +13,7 @@ var sounds = {};
 var images = {};
 var textures = {};
 var poses;
+var glyphs;
 
 var bkglayer = new Set();
 var moblayer = new Set();
@@ -287,30 +288,34 @@ function keyup(e) {
   return false;
 }
 
-function preload(what, where, onload, ...list) {
-  for (var i = 0; i < list.length; i++) {
-    let v = list[i];
+function preload(what, where, onload, elements) {
+  elements.forEach((e)=> {
+    let v=e.getAttribute('id');
+    console.log(v);
     where[v] = new what();
     where[v].onload = () => {
       onload(v);
     };
     where[v].src = "data/" + v;
-  }
+  });
 }
 
 async function load() {
 
   canvas = document.querySelector("canvas");
+  xres = canvas.width;
+  yres = canvas.height;
+
   gl = canvas.getContext("webgl");
 
   const program = gl.createProgram();
   const vshader = gl.createShader(gl.VERTEX_SHADER);
   gl.attachShader(program, vshader);
   gl.shaderSource(vshader, `
-  attribute vec2 aVertexPosition;
+  attribute vec2 aPos;
+  uniform vec2 uOff,uSiz,uRes;
   void main() {
-    
-    gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+    gl_Position = vec4((aPos.x*uSiz.x+uOff.x)*2.0/uRes.x-1.0, 1.0-(aPos.y*uSiz.y+uOff.y)*2.0/uRes.y, 0.0, 1.0);
     gl_PointSize = 64.0;
   }
   `);
@@ -326,7 +331,7 @@ float checkboard(vec2 st, float tilesize) {
 }
 void main(){
     float c = checkboard(gl_FragCoord.xy, 1.0);
-    gl_FragColor = vec4(c,c,c, 1.0);
+    gl_FragColor = vec4(gl_FragCoord.x,gl_FragCoord.y,0, 1.0);
 }
 `);
   gl.compileShader(fshader);
@@ -334,45 +339,29 @@ void main(){
   gl.useProgram(program);
 
   let vertexArray = new Float32Array([
-    0, 0.5, 0.5, 0.5, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0,
+    0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0,
   ]);
 
   let vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
 
-  let aVertexPosition = gl.getAttribLocation(program, "aVertexPosition");
+  gl.uniform2f(gl.getUniformLocation(program, "uRes"), xres, yres);
+ 
+  let aPos = gl.getAttribLocation(program, "aPos");
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-  gl.enableVertexAttribArray(aVertexPosition);
-  gl.vertexAttribPointer(aVertexPosition, 2, gl.FLOAT, false, 0, 0);
-
+  gl.uniform2f(gl.getUniformLocation(program, "uOff"), 160,120);
+  gl.uniform2f(gl.getUniformLocation(program, "uSiz"), 160,120);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-  xres = canvas.width;
-  yres = canvas.height;
+  gl.uniform2f(gl.getUniformLocation(program, "uOff"), 10,10);
+  gl.uniform2f(gl.getUniformLocation(program, "uSiz"), 50,50);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
 
   preload(Image, images, (k) => { textures[k] = loadTexture(images[k]); },
-
-    "allarme_1.png",
-    "cake_1.png",
-    "gatto_1.png",
-    "gatto_2.png",
-    "gatto_3.png",
-    "gatto_4.png",
-    "gatto_5.png",
-    "lazer_E.png",
-    "lazer_N.png",
-    "lazer_NE.png",
-    "lazer_NO.png",
-    "lazer_O.png",
-    "lazer_S.png",
-    "lazer_SE.png",
-    "lazer_SO.png",
-    "placeholder.png",
-    "sfondo.png",
-    "sveglia_1.png",
-    "sveglia_2.png"
-  );
+          document.querySelectorAll('link[rel="preload"][as="image"]'));
 
   preload(
     Audio,
@@ -393,6 +382,12 @@ void main(){
       poses = parsed;
     });
 
+  await fetch("data/gamefont.json")
+    .then((response) => response.json())
+    .then((parsed) => {
+      glyphs = parsed;
+    });
+
   resize();
   canvas.focus();
 
@@ -403,3 +398,6 @@ void main(){
   init();
   window.requestAnimationFrame(step);
 }
+
+console.log("HEY!");
+window.addEventListener('load', load);
