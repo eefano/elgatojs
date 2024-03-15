@@ -9,14 +9,10 @@ canvas
     background: black;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    /*
-    image-rendering: crisp-edges;
-    image-rendering: optimizeSpeed;
-	image-rendering: -moz-crisp-edges;
+	/*image-rendering: -moz-crisp-edges;
 	image-rendering: -webkit-optimize-contrast;
 	image-rendering: optimize-contrast;
-	-ms-interpolation-mode: nearest-neighbor;
-    */
+	-ms-interpolation-mode: nearest-neighbor;*/
 
     margin: auto;
     display: block;
@@ -26,6 +22,11 @@ canvas
     left:0;
     right:0;
 }
+
+canvas:focus {
+    outline: none;
+}
+
 
 @font-face {
     font-family: 'ElGato';

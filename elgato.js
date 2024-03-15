@@ -1,6 +1,6 @@
 "use strict";
 
-var xres, yres, canvas, gl;
+var xres, yres, canvas, gl, ctx, program;
 var keystate = [];
 var keytrigs = new Set();
 
@@ -12,6 +12,7 @@ var pixadjust = 0;
 var sounds = {};
 var images = {};
 var textures = {};
+var jsons = {};
 var poses;
 var glyphs;
 
@@ -29,25 +30,13 @@ function inset(o, ...sets) {
   }
 }
 
-function drawTexture(t, x, y, r, g, b) {
-  //gl.pushMatrix();
-  //gl.translatef(x,y, 0);
-
-  gl.bindTexture(gl.TEXTURE_2D, t.id);
-  gl.color3f(r,g,b);
-
-  gl.Begin(gl.QUADS);
-  gl.TexCoord2f(0.0, 0.0);
-  gl.Vertex2f(0.0, 0.0);
-  gl.TexCoord2f(0.0, t.uv.y);
-  gl.Vertex2f(0.0, t.size.y);
-  gl.TexCoord2f(t.uv.x, t.uv.y);
-  gl.Vertex2f(t.size.x, t.size.y);
-  gl.TexCoord2f(t.uv.x, 0.0);
-  gl.Vertex2f(t.size.x, 0.0);
-  gl.End();
-
-  gl.PopMatrix();
+function drawTexture(tex, x, y, r, g, b) {
+  
+  gl.bindTexture(gl.TEXTURE_2D, tex.id);
+  gl.uniform2f(gl.getUniformLocation(program, "uOff"), x, y);
+  gl.uniform2f(gl.getUniformLocation(program, "uSiz"), tex.size.x,tex.size.y);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  
 }
 
 function validsize(n) {
@@ -58,9 +47,11 @@ function validsize(n) {
 function loadTexture(image) {
   const id = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, id);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8I, gl.RGBA, gl.GL_UNSIGNED_BYTE, image);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
   return {
     id: id,
@@ -110,7 +101,7 @@ function cat() {
   for (let i = -20; i < 20; i++) {
     o.jumpbig.push(60 + (i * i * (220 - 60)) / (20 * 20));
     o.jumpsmall.push(120 + (i * i * (220 - 120)) / (20 * 20));
-  }
+  }ctx
 
   o.movefunc = (o) => {
     if (keytrigs.has(32) && !o.dead) {
@@ -142,7 +133,7 @@ function cat() {
 			Vector eyes = fire->offset;
 			Vector base = poses["gatto_0"]->offset;
 
-			insertqueue[MOB_ffire]->push_back(new Lazor( pos + eyes - base , Vector(dx,dy)));
+			insertqueue[MOB_ffire]->push_back(new Lazor( pos + eyes - base , dx,dy)));
       */
     }
 
@@ -201,18 +192,45 @@ function drawlayers(...layers) {
     var layer = layers[j];
     for (const o of layer) {
       if (o.visible) {
+        /*
+        ctx.drawImage(
+          images[o.pose.img],
+          o.pos[0] + o.pose.xof - o.base.xof,
+          o.pos[1] + o.pose.yof - o.base.yof);
+          */    
         drawTexture(
           textures[o.pose.img],
-          o.pos[0] + o.pose.xof - o.base.xof + pixadjust,
-          o.pos[1] + o.pose.yof - o.base.yof + pixadjust,
+          o.pos[0] + o.pose.xof - o.base.xof,
+          o.pos[1] + o.pose.yof - o.base.yof,
           1,1,1
-        );
+        );      
       }
     }
   }
 }
 
-function step() {
+function outlinetext(text, x, y, fore, back)
+{
+  ctx.fillStyle = back;
+	ctx.fillText(text,x,y);
+	ctx.fillText(text,x+1,y);
+	ctx.fillText(text,x+2,y);
+	ctx.fillText(text,x,y+1);
+	ctx.fillText(text,x+2,y+1);
+	ctx.fillText(text,x,y+2);
+	ctx.fillText(text,x+1,y+2);
+	ctx.fillText(text,x+2,y+2);
+  ctx.fillStyle = fore;
+	ctx.fillText(text,x+1,y+1);
+}
+
+var oldclock;
+
+function step(clock) {
+
+  if(oldclock==clock) console.log("OPS");
+  oldclock = clock;
+
   /*
   ctx.strokeStyle = "white";
   ctx.lineWidth = 1;
@@ -225,7 +243,7 @@ function step() {
   }
   */
 
-  //drawlayers(bkglayer, moblayer, catlayer, shtlayer);
+  drawlayers(bkglayer, moblayer, catlayer, shtlayer);
 
   for (const o of movers) {
     o.movefunc(o);
@@ -237,14 +255,7 @@ function step() {
   removers.clear();
   keytrigs.clear();
 
-  /*
-  ctx.font = "8px ElGato";
-  ctx.strokeStyle = "black";
-  ctx.lineWidth = 2;
-  ctx.strokeText("Hello world", 11.0, 50.0);
-  ctx.fillStyle = "orangered";
-  ctx.fillText("Hello world", 11.0 + ((frame>>8)&1), 50.0);
-  */
+  //outlinetext("Hello world", 10, 50, 'orangered', 'black');
 
   frame++;
   window.requestAnimationFrame(step);
@@ -253,14 +264,14 @@ function step() {
 function init() {
   points = 0;
   win = false;
-  //sfondo(0);
-  //sfondo(xres);
+  sfondo(0);
+  sfondo(xres);
   cat();
 }
 
 function resize() {
-  var h = window.innerHeight;
-  var w = window.innerWidth;
+  var h = window.innerHeight * window.devicePixelRatio;
+  var w = window.innerWidth * window.devicePixelRatio;
 
   var kx = (w / xres) >> 0;
   var ky = (h / yres) >> 0;
@@ -274,8 +285,8 @@ function resize() {
     else k = 1;
   }
 
-  canvas.style.width = xres * k + "px";
-  canvas.style.height = yres * k + "px";
+  canvas.style.width = xres * k / window.devicePixelRatio + "px";
+  canvas.style.height = yres * k / window.devicePixelRatio + "px";
 }
 
 function keydown(e) {
@@ -288,16 +299,14 @@ function keyup(e) {
   return false;
 }
 
-function preload(what, where, onload, elements) {
-  elements.forEach((e)=> {
-    let v=e.getAttribute('id');
-    console.log(v);
-    where[v] = new what();
-    where[v].onload = () => {
-      onload(v);
-    };
-    where[v].src = "data/" + v;
-  });
+async function preload(what, callback) {
+  let elements = document.querySelectorAll('link[as="'+what+'"]')
+  for(let i=0; i<elements.length; i++)
+  {
+    let href = elements[i].attributes['href'].nodeValue;
+    let v=href.substring(5);
+    await callback(v,elements[i].href);
+  }
 }
 
 async function load() {
@@ -306,34 +315,76 @@ async function load() {
   xres = canvas.width;
   yres = canvas.height;
 
-  gl = canvas.getContext("webgl");
+  //ctx = canvas.getContext('2d');
+  //ctx.font = "8px ElGato";
 
-  const program = gl.createProgram();
+  gl = canvas.getContext("webgl");
+  gl.enable(gl.BLEND);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+  preload('image', (v, href)=>
+  {
+    images[v] = new Image();
+    images[v].onload = () => {
+      textures[v] = loadTexture(images[v]);
+    };
+    images[v].src = href;
+  });
+  
+  preload('audio', (v, href)=>
+  {
+    sounds[v] = new Audio();
+    sounds[v].src = href;
+  });
+  
+  await preload('fetch', async (v, href)=>
+  {
+    const res = await fetch(href);
+    jsons[v] = await res.json();
+  });
+ 
+  poses = jsons['layers.json'];
+  glyphs = jsons['gamefont.json'];
+
+  var checkerboard = `
+  precision mediump float;
+  
+  float checkboard(vec2 st, float tilesize) {
+    vec2 pos = mod(st, tilesize * 2.0);
+    return mod(step(tilesize, pos.x) + step(tilesize, pos.y), 2.0);
+  }
+  void main(){
+      float c = checkboard(gl_FragCoord.xy, 1.0);
+      gl_FragColor = vec4(c,c,c, 2.0);
+  }
+  `;
+  var texshader = `
+  varying highp vec2 vTex;
+
+  uniform sampler2D uSampler;
+
+  void main(void) {
+    gl_FragColor = texture2D(uSampler, vTex);
+  }
+  `;
+
+  program = gl.createProgram();
   const vshader = gl.createShader(gl.VERTEX_SHADER);
   gl.attachShader(program, vshader);
   gl.shaderSource(vshader, `
   attribute vec2 aPos;
+  attribute vec2 aTex;
   uniform vec2 uOff,uSiz,uRes;
+  varying highp vec2 vTex;
   void main() {
     gl_Position = vec4((aPos.x*uSiz.x+uOff.x)*2.0/uRes.x-1.0, 1.0-(aPos.y*uSiz.y+uOff.y)*2.0/uRes.y, 0.0, 1.0);
-    gl_PointSize = 64.0;
+    vTex = aPos;
   }
   `);
   gl.compileShader(vshader);
   const fshader = gl.createShader(gl.FRAGMENT_SHADER);
   gl.attachShader(program, fshader);
-  gl.shaderSource(fshader, `
-precision mediump float;
-
-float checkboard(vec2 st, float tilesize) {
-  vec2 pos = mod(st, tilesize * 2.0);
-  return mod(step(tilesize, pos.x) + step(tilesize, pos.y), 2.0);
-}
-void main(){
-    float c = checkboard(gl_FragCoord.xy, 1.0);
-    gl_FragColor = vec4(gl_FragCoord.x,gl_FragCoord.y,0, 1.0);
-}
-`);
+  gl.shaderSource(fshader, texshader);
   gl.compileShader(fshader);
   gl.linkProgram(program);
   gl.useProgram(program);
@@ -352,42 +403,7 @@ void main(){
   gl.enableVertexAttribArray(aPos);
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-  gl.uniform2f(gl.getUniformLocation(program, "uOff"), 160,120);
-  gl.uniform2f(gl.getUniformLocation(program, "uSiz"), 160,120);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-  gl.uniform2f(gl.getUniformLocation(program, "uOff"), 10,10);
-  gl.uniform2f(gl.getUniformLocation(program, "uSiz"), 50,50);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-  preload(Image, images, (k) => { textures[k] = loadTexture(images[k]); },
-          document.querySelectorAll('link[rel="preload"][as="image"]'));
-
-  preload(
-    Audio,
-    sounds,
-    ()=>{},
-    "boom.mp3",
-    "die.mp3",
-    "hit.mp3",
-    "ingame.mp3",
-    "ring.mp3",
-    "shot.mp3",
-    "win.mp3"
-  );
-
-  await fetch("data/layers.json")
-    .then((response) => response.json())
-    .then((parsed) => {
-      poses = parsed;
-    });
-
-  await fetch("data/gamefont.json")
-    .then((response) => response.json())
-    .then((parsed) => {
-      glyphs = parsed;
-    });
-
+  
   resize();
   canvas.focus();
 
@@ -399,5 +415,4 @@ void main(){
   window.requestAnimationFrame(step);
 }
 
-console.log("HEY!");
 window.addEventListener('load', load);
