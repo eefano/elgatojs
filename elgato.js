@@ -1,7 +1,8 @@
-import { gfx_canvas } from "./gfx-canvas.js";
-import { gfx_webgl } from "./gfx-webgl.js";
+import { GFX_Canvas } from "./gfx-canvas.js";
+import { GFX_Webgl } from "./gfx-webgl.js";
+import { TXT } from "./txt.js";
 
-var xres, yres, canvas, gfx;
+var xres, yres, canvas, gfx, txt;
 var keystate = [];
 var keytrigs = new Set();
 
@@ -12,7 +13,6 @@ var win = false;
 var sounds = {};
 var jsons = {};
 var poses;
-var glyphs;
 
 var bkglayer = new Set();
 var moblayer = new Set();
@@ -161,9 +161,7 @@ function drawlayers(...layers) {
           o.pose.img,
           o.pos[0] + o.pose.xof - o.base.xof,
           o.pos[1] + o.pose.yof - o.base.yof,
-          1,
-          1,
-          1
+          { r: 1, g: 1, b: 1, a: 1 }
         );
       }
     }
@@ -183,7 +181,13 @@ function step(clock) {
   removers.clear();
   keytrigs.clear();
 
-  //outlinetext("Hello world", 10, 50, 'orangered', 'black');
+  txt.outlinetext(
+    "Hello world",
+    10,
+    50,
+    { r: 255, g: 255, b: 0 },
+    { r: 0, g: 0, b: 0 }
+  );
 
   frame++;
   window.requestAnimationFrame(step);
@@ -241,7 +245,8 @@ async function load() {
   xres = canvas.width;
   yres = canvas.height;
 
-  gfx = gfx_canvas(canvas);
+  //gfx = GFX_Canvas(canvas);
+  gfx = GFX_Webgl(canvas);
 
   preload("image", (v, href) => {
     let i = new Image();
@@ -262,7 +267,8 @@ async function load() {
   });
 
   poses = jsons["layers.json"];
-  glyphs = jsons["gamefont.json"];
+
+  txt = TXT(gfx, jsons["gamefont.json"]);
 
   resize();
   canvas.focus();
