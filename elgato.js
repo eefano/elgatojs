@@ -1,17 +1,15 @@
-"use strict";
+import { gfx_canvas } from "./gfx-canvas.js";
+import { gfx_webgl } from "./gfx-webgl.js";
 
-var xres, yres, canvas, gl, ctx, program;
+var xres, yres, canvas, gfx;
 var keystate = [];
 var keytrigs = new Set();
 
 var frame = 0;
 var points = 0;
 var win = false;
-var pixadjust = 0;
 
 var sounds = {};
-var images = {};
-var textures = {};
 var jsons = {};
 var poses;
 var glyphs;
@@ -28,39 +26,6 @@ function inset(o, ...sets) {
     sets[j].add(o);
     o.sets.add(sets[j]);
   }
-}
-
-function drawTexture(tex, x, y, r, g, b) {
-  
-  gl.bindTexture(gl.TEXTURE_2D, tex.id);
-  gl.uniform2f(gl.getUniformLocation(program, "uOff"), x, y);
-  gl.uniform2f(gl.getUniformLocation(program, "uSiz"), tex.size.x,tex.size.y);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
-  
-}
-
-function validsize(n) {
-  var ok = 2;
-  while (ok < n) ok = ok << 1;
-  return ok;
-}
-function loadTexture(image) {
-  const id = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, id);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-  return {
-    id: id,
-    size: { x: image.width, y: image.height },
-    uv: {
-      x: image.width / validsize(image.width),
-      y: image.height / validsize(image.height),
-    },
-  };
 }
 
 function sfondo(xstart) {
@@ -101,7 +66,7 @@ function cat() {
   for (let i = -20; i < 20; i++) {
     o.jumpbig.push(60 + (i * i * (220 - 60)) / (20 * 20));
     o.jumpsmall.push(120 + (i * i * (220 - 120)) / (20 * 20));
-  }ctx
+  }
 
   o.movefunc = (o) => {
     if (keytrigs.has(32) && !o.dead) {
@@ -192,57 +157,20 @@ function drawlayers(...layers) {
     var layer = layers[j];
     for (const o of layer) {
       if (o.visible) {
-        /*
-        ctx.drawImage(
-          images[o.pose.img],
-          o.pos[0] + o.pose.xof - o.base.xof,
-          o.pos[1] + o.pose.yof - o.base.yof);
-          */    
-        drawTexture(
-          textures[o.pose.img],
+        gfx.drawTexture(
+          o.pose.img,
           o.pos[0] + o.pose.xof - o.base.xof,
           o.pos[1] + o.pose.yof - o.base.yof,
-          1,1,1
-        );      
+          1,
+          1,
+          1
+        );
       }
     }
   }
 }
 
-function outlinetext(text, x, y, fore, back)
-{
-  ctx.fillStyle = back;
-	ctx.fillText(text,x,y);
-	ctx.fillText(text,x+1,y);
-	ctx.fillText(text,x+2,y);
-	ctx.fillText(text,x,y+1);
-	ctx.fillText(text,x+2,y+1);
-	ctx.fillText(text,x,y+2);
-	ctx.fillText(text,x+1,y+2);
-	ctx.fillText(text,x+2,y+2);
-  ctx.fillStyle = fore;
-	ctx.fillText(text,x+1,y+1);
-}
-
-var oldclock;
-
 function step(clock) {
-
-  if(oldclock==clock) console.log("OPS");
-  oldclock = clock;
-
-  /*
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 1;
-  for(let i=0.5;i<xres;i+=2) 
-  {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i, yres);
-    ctx.stroke();
-  }
-  */
-
   drawlayers(bkglayer, moblayer, catlayer, shtlayer);
 
   for (const o of movers) {
@@ -285,8 +213,8 @@ function resize() {
     else k = 1;
   }
 
-  canvas.style.width = xres * k / window.devicePixelRatio + "px";
-  canvas.style.height = yres * k / window.devicePixelRatio + "px";
+  canvas.style.width = (xres * k) / window.devicePixelRatio + "px";
+  canvas.style.height = (yres * k) / window.devicePixelRatio + "px";
 }
 
 function keydown(e) {
@@ -300,110 +228,42 @@ function keyup(e) {
 }
 
 async function preload(what, callback) {
-  let elements = document.querySelectorAll('link[as="'+what+'"]')
-  for(let i=0; i<elements.length; i++)
-  {
-    let href = elements[i].attributes['href'].nodeValue;
-    let v=href.substring(5);
-    await callback(v,elements[i].href);
+  let elements = document.querySelectorAll('link[as="' + what + '"]');
+  for (let i = 0; i < elements.length; i++) {
+    let href = elements[i].attributes["href"].nodeValue;
+    let v = href.substring(5);
+    await callback(v, elements[i].href);
   }
 }
 
 async function load() {
-
   canvas = document.querySelector("canvas");
   xres = canvas.width;
   yres = canvas.height;
 
-  //ctx = canvas.getContext('2d');
-  //ctx.font = "8px ElGato";
+  gfx = gfx_canvas(canvas);
 
-  gl = canvas.getContext("webgl");
-  gl.enable(gl.BLEND);
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-  preload('image', (v, href)=>
-  {
-    images[v] = new Image();
-    images[v].onload = () => {
-      textures[v] = loadTexture(images[v]);
+  preload("image", (v, href) => {
+    let i = new Image();
+    i.onload = () => {
+      gfx.loadTexture(v, i);
     };
-    images[v].src = href;
+    i.src = href;
   });
-  
-  preload('audio', (v, href)=>
-  {
+
+  preload("audio", (v, href) => {
     sounds[v] = new Audio();
     sounds[v].src = href;
   });
-  
-  await preload('fetch', async (v, href)=>
-  {
+
+  await preload("fetch", async (v, href) => {
     const res = await fetch(href);
     jsons[v] = await res.json();
   });
- 
-  poses = jsons['layers.json'];
-  glyphs = jsons['gamefont.json'];
 
-  var checkerboard = `
-  precision mediump float;
-  
-  float checkboard(vec2 st, float tilesize) {
-    vec2 pos = mod(st, tilesize * 2.0);
-    return mod(step(tilesize, pos.x) + step(tilesize, pos.y), 2.0);
-  }
-  void main(){
-      float c = checkboard(gl_FragCoord.xy, 1.0);
-      gl_FragColor = vec4(c,c,c, 2.0);
-  }
-  `;
-  var texshader = `
-  varying highp vec2 vTex;
+  poses = jsons["layers.json"];
+  glyphs = jsons["gamefont.json"];
 
-  uniform sampler2D uSampler;
-
-  void main(void) {
-    gl_FragColor = texture2D(uSampler, vTex);
-  }
-  `;
-
-  program = gl.createProgram();
-  const vshader = gl.createShader(gl.VERTEX_SHADER);
-  gl.attachShader(program, vshader);
-  gl.shaderSource(vshader, `
-  attribute vec2 aPos;
-  attribute vec2 aTex;
-  uniform vec2 uOff,uSiz,uRes;
-  varying highp vec2 vTex;
-  void main() {
-    gl_Position = vec4((aPos.x*uSiz.x+uOff.x)*2.0/uRes.x-1.0, 1.0-(aPos.y*uSiz.y+uOff.y)*2.0/uRes.y, 0.0, 1.0);
-    vTex = aPos;
-  }
-  `);
-  gl.compileShader(vshader);
-  const fshader = gl.createShader(gl.FRAGMENT_SHADER);
-  gl.attachShader(program, fshader);
-  gl.shaderSource(fshader, texshader);
-  gl.compileShader(fshader);
-  gl.linkProgram(program);
-  gl.useProgram(program);
-
-  let vertexArray = new Float32Array([
-    0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0,
-  ]);
-
-  let vertexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
-
-  gl.uniform2f(gl.getUniformLocation(program, "uRes"), xres, yres);
- 
-  let aPos = gl.getAttribLocation(program, "aPos");
-  gl.enableVertexAttribArray(aPos);
-  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-  
   resize();
   canvas.focus();
 
@@ -415,4 +275,4 @@ async function load() {
   window.requestAnimationFrame(step);
 }
 
-window.addEventListener('load', load);
+window.addEventListener("load", load);

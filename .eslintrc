@@ -9,6 +9,7 @@
         "require-await": "error"
     },
     "parserOptions": {
-        "ecmaVersion": 8
+        "ecmaVersion": 8,
+        "sourceType": "module"
       }
 }
