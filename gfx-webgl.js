@@ -110,12 +110,17 @@ function GFX_Webgl(canvas) {
     tex.color[2] = 1;
   }
 
+  function getTextureSize(name) {
+    return textures[name].size;
+  }
+
   return {
     drawTexture,
     drawSubTexture,
     loadTexture,
     tintTexture,
     untintTexture,
+    getTextureSize
   };
 }
 
