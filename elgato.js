@@ -70,8 +70,9 @@ function entity(o = {}) {
     return o.inSet(layer);
   };
 
-  o.hasCollision = (mylayer, theirlayers, f) => {
+  o.hasCollision = (mylayer, others, f) => {
     o.collision = f;
+    o.others = others;
     return o.inSet(mylayer);
   };
 
@@ -109,7 +110,7 @@ function Background(xstart) {
     });
 }
 
-function collisions(oo1, oo2) {
+function collisions(oo1) {
   for (const o1 of oo1) {
     const a1x = o1.posx + o1.pose.xof - o1.base.xof;
     const a1y = o1.posy + o1.pose.yof - o1.base.yof;
@@ -117,16 +118,22 @@ function collisions(oo1, oo2) {
     const b1x = a1x + tx1.x;
     const b1y = a1y + tx1.y;
 
-    for (const o2 of oo2) {
-      const a2x = o2.posx + o2.pose.xof - o2.base.xof;
-      const a2y = o2.posy + o2.pose.yof - o2.base.yof;
-      const tx2 = gfx.getTextureSize(o2.pose.img);
-      const b2x = a2x + tx2.x;
-      const b2y = a2y + tx2.y;
+    for (let i = 0; i < o1.others.length; i++) {
+      const oo2 = o1.others[i];
 
-      if ((a2x - b1x) * (b2x - a1x) < 0.0 && (a2y - b1y) * (b2y - a1y) < 0.0) {
-        o1.collision(o2);
-        o2.collision(o1);
+      for (const o2 of oo2) {
+        const a2x = o2.posx + o2.pose.xof - o2.base.xof;
+        const a2y = o2.posy + o2.pose.yof - o2.base.yof;
+        const tx2 = gfx.getTextureSize(o2.pose.img);
+        const b2x = a2x + tx2.x;
+        const b2y = a2y + tx2.y;
+
+        if (
+          (a2x - b1x) * (b2x - a1x) < 0.0 &&
+          (a2y - b1y) * (b2y - a1y) < 0.0
+        ) {
+          o1.collision(o2);
+        }
       }
     }
   }
@@ -134,6 +141,8 @@ function collisions(oo1, oo2) {
 
 function step() {
   let status = "";
+
+  // RENDERING
 
   Object.entries(VL).forEach(([name, layer]) => {
     status += name + ":" + layer.size + " ";
@@ -151,9 +160,11 @@ function step() {
 
   txt.outlinetext(status, 0, 0, { r: 255, g: 255, b: 0 }, { r: 0, g: 0, b: 0 });
 
-  collisions(CL.cat, CL.enf);
-  collisions(CL.mob, CL.frf);
-  collisions(CL.cat, CL.mob);
+  // COLLISIONS
+
+  Object.values(CL).forEach((layer) => {
+    collisions(layer);
+  });
 
   for (const o of movers) {
     o.movefunc(frame);
