@@ -15,7 +15,6 @@ var points = 0;
 var win = false;
 var cat;
 
-var sounds = {};
 var jsons = {};
 var poses;
 
@@ -269,11 +268,11 @@ async function preload(what, callback) {
 }
 
 async function load() {
-  canvas = document.querySelector("canvas");
+  canvas = document.querySelector("#gamecanvas");
   xres = canvas.width;
   yres = canvas.height;
 
-  gfx = GFX_Webgl(canvas);
+  gfx = undefined; //GFX_Webgl(canvas);
   if (gfx === undefined) {
     console.log("WebGL not available, falling back to HTML5 Canvas");
     gfx = GFX_Canvas(canvas);
@@ -288,8 +287,11 @@ async function load() {
   });
 
   preload("audio", (v, href) => {
-    sounds[v] = new Audio();
-    sounds[v].src = href;
+    let i = new Audio();
+    i.oncanplaythrough = () => {
+      SFX.load(v, i);
+    };
+    i.src = href;
   });
 
   await preload("fetch", async (v, href) => {
@@ -307,6 +309,11 @@ async function load() {
   canvas.addEventListener("keydown", keydown, true);
   canvas.addEventListener("keyup", keyup, true);
   window.addEventListener("resize", resize);
+
+  document.querySelector("#sound_icon").addEventListener("onclick", ()=>{
+    console.log("toggle mute");
+    SFX.setMuted(!SFX.isMuted());
+  });
 
   init();
   window.requestAnimationFrame(step);

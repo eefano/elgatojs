@@ -24,7 +24,8 @@ let SFX = {
     }
     playing.clear();
   },
-  setMuted: function (muted) {
+  setMuted: function (m) {
+    muted = m;
     for (let a in playing) {
       a.muted = muted;
     }

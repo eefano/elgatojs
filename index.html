@@ -42,8 +42,24 @@
         <link rel="preload" href="data/win.mp3" as="audio" />
 
         <script type="module" src="elgato.js" ></script>
+
+        <script type="text/javascript">
+            function fullscreenClick()
+            {
+                if(document.fullscreenElement) document.exitFullscreen()
+                else document.documentElement.requestFullscreen();
+            }
+        </script>
     </head>
-    <body>
-        <canvas width="320" height="240" tabindex="1"></canvas>
+    <body>      
+        <img class="circle" id="fullscreen_icon" src="ui/fullscreen.svg" onclick="fullscreenClick()">
+        <img class="circle" id="restart_icon" src="ui/restart.svg">
+        <img class="circle" id="sound_icon" src="ui/sound_off.svg">
+        <img class="circle" id="music_icon" src="ui/music_on.svg">
+        <img class="circle" id="dpad_icon" src="ui/dpad.svg">
+        <img class="circle" id="a_icon" src="ui/button.svg">
+        <img class="circle" id="b_icon" src="ui/button.svg">
+        
+        <canvas id="gamecanvas" width="320" height="240" tabindex="1"></canvas>
     </body>
 </html>

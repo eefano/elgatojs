@@ -2,9 +2,11 @@ body
 {
     background-color: #404040;
     margin: 0;
+
+    touch-action: none;
 }
 
-canvas
+#gamecanvas
 {
     background: black;
     image-rendering: pixelated;
@@ -23,10 +25,66 @@ canvas
     right:0;
 }
 
-canvas:focus {
+#gamecanvas:focus {
     outline: none;
 }
 
+#fullscreen_icon {
+    height: 8vmin;
+    top: 1vmin;
+    right: 1vmin;
+}
+#restart_icon {
+    height: 8vmin;
+    top: 1vmin;
+    right: 12vmin;
+}
+#sound_icon {
+    height: 8vmin;
+    top: 1vmin;
+    left: 1vmin;
+}
+#music_icon {
+    height: 8vmin;
+    top: 1vmin;
+    left: 12vmin;
+    visibility: hidden;
+}
+#dpad_icon {
+    height: 40vmin;
+    left: 4vmin;
+    top: 0;
+    bottom: 0;
+    visibility: hidden;
+}
+#a_icon {
+    height: 15vmin;
+    right: 4vmin;
+    top: 50vmin;
+    bottom: 50vmin;
+    visibility: hidden;
+}
+#b_icon {
+    height: 15vmin;
+    right: 15vmin;
+    top: 60vmin;
+    bottom: 40vmin;
+    visibility: hidden;
+}
+
+img.circle {
+    background: #C0C0C0;
+    -moz-border-radius: 50px;
+    -webkit-border-radius: 50px;
+    border-radius: 50px;
+
+    margin: auto;
+    display: block;
+    position: absolute;
+    padding: 1vmin;
+
+    cursor: pointer;
+}
 
 @font-face {
     font-family: 'ElGato';
