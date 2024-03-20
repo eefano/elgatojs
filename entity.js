@@ -31,6 +31,7 @@ function Entity(o = {}) {
   o.hasCollision = (mylayer, others, f) => {
     o.collision = f;
     o.others = others;
+    o.cancollide = true;
     return o.inSet(mylayer);
   };
 

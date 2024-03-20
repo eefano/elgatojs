@@ -36,8 +36,8 @@ body
 }
 #restart_icon {
     height: 8vmin;
-    top: 1vmin;
-    right: 12vmin;
+    top: 12vmin;
+    right: 1vmin;
 }
 #sound_icon {
     height: 8vmin;
@@ -46,8 +46,8 @@ body
 }
 #music_icon {
     height: 8vmin;
-    top: 1vmin;
-    left: 12vmin;
+    top: 12vmin;
+    left: 1vmin;
     visibility: hidden;
 }
 #dpad_icon {

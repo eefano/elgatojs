@@ -27,6 +27,7 @@ function Clock(shootChance, steerChance, pointfunc) {
       if (!o.invulnerable) {
         SFX.play('boom.mp3');
         o.pointfunc(o);
+        o.cancollide = false;
         o.hasMovement(() => {}).hasInvuln(30, () => o.remove());
       }
     });

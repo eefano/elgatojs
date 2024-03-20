@@ -1,5 +1,10 @@
 {
-"sfondo" : {
+"sfondo_0" : {
+"img":"placeholder.png",
+"xof": 0,
+"yof": 24
+},
+"sfondo_1" : {
 "img":"sfondo.png",
 "xof": 0,
 "yof": 0

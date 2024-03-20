@@ -3,23 +3,22 @@ import { SFX } from "./sfx.js";
 import { Entity } from "./entity.js";
 import { Lazur } from "./lazur.js";
 
-const jumpbig = [],
-  jumpsmall = [];
-for (let i = -20; i < 20; i++) {
-  jumpbig.push(60 + (i * i * (220 - 60)) / (20 * 20));
-  jumpsmall.push(120 + (i * i * (220 - 120)) / (20 * 20));
-}
-
-function Cat(diefunc) {
+function Cat(xp, yp, diefunc) {
+  const jumpbig = [],
+    jumpsmall = [];
+  for (let i = -20; i < 20; i++) {
+    jumpbig.push(60 + (i * i * (yp - 60)) / (20 * 20));
+    jumpsmall.push(120 + (i * i * (yp - 120)) / (20 * 20));
+  }
   let o = Entity({
     lives: 9,
     jumping: false,
     crouching: false,
     dead: false,
     jumpstart: 0,
-    diefunc: diefunc
+    diefunc: diefunc,
   })
-    .hasPos(40, 220)
+    .hasPos(xp, yp)
     .hasSprite(VL.cat, poses.gatto_0, poses.gatto_0)
     .hasAnimation((frame) => {
       if (o.dead) o.pose = poses.gatto_5;
@@ -76,7 +75,7 @@ function Cat(diefunc) {
         if (d < 40) o.posy = o.jumpcycle[d];
         else o.jumping = false;
       } else {
-        o.posy = 220;
+        o.posy = yp;
         if (o.dead) o.crouching = true;
         else o.crouching = keystate[40];
       }
@@ -98,6 +97,7 @@ function Cat(diefunc) {
     })
     .hasCollision(CL.cat, [CL.mob, CL.enf], () => {
       if (!o.invulnerable && !o.dead) {
+        o.cancollide = false;
         SFX.play('hit.mp3');
         o.lives = o.lives - 1;
         if (o.lives == 0) {
@@ -105,7 +105,7 @@ function Cat(diefunc) {
           o.pose = poses.gatto_5;
           o.diefunc(o);
         } else {
-          o.hasInvuln(60, () => {});
+          o.hasInvuln(60, () => { o.cancollide = true;});
         }
       }
     });

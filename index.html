@@ -33,13 +33,13 @@
         <link rel="preload" href="data/lazer_SE.png" as="image" />
         <link rel="preload" href="data/lazer_SO.png" as="image" />
 
-        <link rel="preload" href="data/boom.mp3" as="audio" />
-        <link rel="preload" href="data/die.mp3" as="audio" />
-        <link rel="preload" href="data/hit.mp3" as="audio" />
-        <link rel="preload" href="data/ingame.mp3" as="audio" />
-        <link rel="preload" href="data/ring.mp3" as="audio" />
-        <link rel="preload" href="data/shot.mp3" as="audio" />
-        <link rel="preload" href="data/win.mp3" as="audio" />
+        <link rel="prefetch" href="data/boom.mp3" as="fetch" />
+        <link rel="prefetch" href="data/hit.mp3" as="fetch" />
+        <link rel="prefetch" href="data/ring.mp3" as="fetch" />
+        <link rel="prefetch" href="data/shot.mp3" as="fetch" />
+        <link rel="prefetch" href="data/ingame.mp3" as="fetch" />
+        <link rel="prefetch" href="data/win.mp3" as="fetch" />
+        <link rel="prefetch" href="data/die.mp3" as="fetch" />
 
         <script type="module" src="elgato.js" ></script>
 
@@ -60,6 +60,6 @@
         <img class="circle" id="a_icon" src="ui/button.svg">
         <img class="circle" id="b_icon" src="ui/button.svg">
         
-        <canvas id="gamecanvas" width="320" height="240" tabindex="1"></canvas>
+        <canvas id="gamecanvas" width="320" height="216" tabindex="1"></canvas>
     </body>
 </html>

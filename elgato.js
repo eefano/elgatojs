@@ -53,7 +53,7 @@ function dice(p1000) {
 function Background(xstart) {
   let o = Entity({ shift: 0 })
     .hasPos(xstart, 0)
-    .hasSprite(VL.bkg, poses.sfondo, poses.sfondo)
+    .hasSprite(VL.bkg, poses.sfondo_1, poses.sfondo_0)
     .hasMovement(() => {
       //o.shift++;
       if (o.shift >= xres) o.shift = 0;
@@ -64,6 +64,7 @@ function Background(xstart) {
 
 function collisions(oo1) {
   for (const o1 of oo1) {
+    if(!o1.cancollide) continue;
     const a1x = o1.posx + o1.pose.xof - o1.base.xof;
     const a1y = o1.posy + o1.pose.yof - o1.base.yof;
     const tx1 = gfx.getTextureSize(o1.pose.img);
@@ -74,6 +75,7 @@ function collisions(oo1) {
       const oo2 = o1.others[i];
 
       for (const o2 of oo2) {
+        if(!o2.cancollide) continue;
         const a2x = o2.posx + o2.pose.xof - o2.base.xof;
         const a2y = o2.posy + o2.pose.yof - o2.base.yof;
         const tx2 = gfx.getTextureSize(o2.pose.img);
@@ -123,7 +125,7 @@ function step() {
   txt.outlinetext(
     "Lives: " + cat.lives,
     10,
-    236,
+    yres-5,
     [1.0, 0.5, 0.5],
     [0.1, 0.1, 0.1]
   );
@@ -131,12 +133,12 @@ function step() {
   txt.outlinetext(
     "Points: " + points,
     240,
-    236,
+    yres-5,
     [0.5, 0.5, 1.0],
     [0.1, 0.1, 0.1]
   );
 
-  txt.outlinetext(status, 80, 236, [1, 1, 0], [0, 0, 0]);
+  txt.outlinetext(status, 80, yres-5, [1, 1, 0], [0, 0, 0]);
 
   // COLLISIONS
 
@@ -222,7 +224,7 @@ function init() {
   SFX.play("ingame.mp3", true);
   Background(0);
   Background(xres);
-  cat = Cat(() => {
+  cat = Cat(40,200,() => {
     SFX.stopAll();
     SFX.play("die.mp3");
   });
@@ -258,8 +260,8 @@ function keyup(e) {
   return false;
 }
 
-async function preload(what, callback) {
-  let elements = document.querySelectorAll('link[as="' + what + '"]');
+async function preload(as, suffix, callback) {
+  let elements = document.querySelectorAll('link[as="' + as + '"][href$="' + suffix + '"]');
   for (let i = 0; i < elements.length; i++) {
     let href = elements[i].attributes["href"].nodeValue;
     let v = href.substring(5);
@@ -278,7 +280,7 @@ async function load() {
     gfx = GFX_Canvas(canvas);
   }
 
-  preload("image", (v, href) => {
+  preload('image','.png', (v, href) => {
     let i = new Image();
     i.onload = () => {
       gfx.loadTexture(v, i);
@@ -286,15 +288,13 @@ async function load() {
     i.src = href;
   });
 
-  preload("audio", (v, href) => {
-    let i = new Audio();
-    i.oncanplaythrough = () => {
-      SFX.load(v, i);
-    };
-    i.src = href;
+  await preload('fetch','.mp3', async (v, href) => {
+    const res = await fetch(href);
+    const buf = await res.arrayBuffer();
+    SFX.load(v, buf);
   });
 
-  await preload("fetch", async (v, href) => {
+  await preload('fetch','.json', async (v, href) => {
     const res = await fetch(href);
     jsons[v] = await res.json();
   });
@@ -310,7 +310,7 @@ async function load() {
   canvas.addEventListener("keyup", keyup, true);
   window.addEventListener("resize", resize);
 
-  document.querySelector("#sound_icon").addEventListener("onclick", ()=>{
+  document.querySelector("#sound_icon").addEventListener("click", ()=>{
     console.log("toggle mute");
     SFX.setMuted(!SFX.isMuted());
   });
