@@ -1,5 +1,6 @@
 import { GFX_Canvas } from "./gfx-canvas.js";
 import { GFX_Webgl } from "./gfx-webgl.js";
+import { Entity } from "./entity.js";
 import { TXT } from "./txt.js";
 import { Cat } from "./cat.js";
 import { Clock } from "./clock.js";
@@ -11,6 +12,7 @@ var keytrigs = new Set();
 var frame = 0;
 var points = 0;
 var win = false;
+var cat;
 
 var sounds = {};
 var jsons = {};
@@ -30,77 +32,29 @@ const CL = {
   cat: new Set(),
   frf: new Set(),
 };
-
-const movers = new Set();
-const removers = new Set();
-const speeders = new Set();
-const deferrers = new Set();
-const clippers = new Set();
-const flickerers = new Set();
+const Cmp = {
+  movers: new Set(),
+  removers: new Set(),
+  speeders: new Set(),
+  deferrers: new Set(),
+  clippers: new Set(),
+  flickerers: new Set(),
+  animators: new Set(),
+};
 
 function rand(n) {
   return Math.trunc(Math.random() * n);
 }
-
-function entity(o = {}) {
-  o.sets = new Set();
-
-  o.inSet = (set) => {
-    set.add(o);
-    o.sets.add(set);
-    return o;
-  };
-
-  o.hasPos = (posx, posy) => {
-    o.posx = posx;
-    o.posy = posy;
-    return o;
-  };
-
-  o.hasVel = (velx, vely) => {
-    o.velx = velx;
-    o.vely = vely;
-    return o.inSet(speeders);
-  };
-
-  o.hasSprite = (layer, pose, base) => {
-    o.visible = true;
-    o.pose = pose;
-    o.base = base;
-    return o.inSet(layer);
-  };
-
-  o.hasCollision = (mylayer, others, f) => {
-    o.collision = f;
-    o.others = others;
-    return o.inSet(mylayer);
-  };
-
-  o.hasBoundary = (marginx, marginy) => {
-    o.marginx = marginx;
-    o.marginy = marginy;
-    return o.inSet(clippers);
-  };
-
-  o.hasMovement = (movef) => {
-    o.movefunc = movef;
-    return o.inSet(movers);
-  };
-
-  o.hasInvuln = () => {
-    o.invulnerable = false;
-    o.invuln = 0;
-    return o.inSet(flickerers);
-  };
-
-  o.defer = (f) => deferrers.add(f);
-  o.remove = () => removers.add(o);
-
-  return o;
+function dice(p1000) {
+  if (p1000 == 0) return false;
+  return Math.random() * 1000 <= p1000;
+}
+function addPoints(n) {
+  points += n;
 }
 
 function Background(xstart) {
-  let o = entity({ shift: 0 })
+  let o = Entity({ shift: 0 })
     .hasPos(xstart, 0)
     .hasSprite(VL.bkg, poses.sfondo, poses.sfondo)
     .hasMovement(() => {
@@ -108,6 +62,7 @@ function Background(xstart) {
       if (o.shift >= xres) o.shift = 0;
       o.posx = xstart - o.shift;
     });
+  return o;
 }
 
 function collisions(oo1) {
@@ -142,6 +97,10 @@ function collisions(oo1) {
 function step() {
   let status = "";
 
+  for (const o of Cmp.animators) {
+    o.animfunc(frame);
+  }
+
   // RENDERING
 
   Object.entries(VL).forEach(([name, layer]) => {
@@ -151,14 +110,36 @@ function step() {
         gfx.drawTexture(
           o.pose.img,
           o.posx + o.pose.xof - o.base.xof,
-          o.posy + o.pose.yof - o.base.yof,
-          { r: 1, g: 1, b: 1, a: 1 }
+          o.posy + o.pose.yof - o.base.yof
         );
       }
     }
   });
 
-  txt.outlinetext(status, 0, 0, { r: 255, g: 255, b: 0 }, { r: 0, g: 0, b: 0 });
+  txt.outlinetext(
+    "A CAT'S DREAM - Use Cursors and Space - crouch to jump higher",
+    25,
+    6,
+    [1, 1, 0],
+    [0.1, 0.1, 0.1]
+  );
+  txt.outlinetext(
+    "Lives: " + cat.lives,
+    10,
+    236,
+    [1.0, 0.5, 0.5],
+    [0.1, 0.1, 0.1]
+  );
+  //txt.normaltext("FPS: " + fps,130,236,[0.0,0.0,0.0]);
+  txt.outlinetext(
+    "Points: " + points,
+    240,
+    236,
+    [0.5, 0.5, 1.0],
+    [0.1, 0.1, 0.1]
+  );
+
+  txt.outlinetext(status, 80, 236, [1, 1, 0], [0, 0, 0]);
 
   // COLLISIONS
 
@@ -166,14 +147,25 @@ function step() {
     collisions(layer);
   });
 
-  for (const o of movers) {
+  for (const o of Cmp.flickerers) {
+    o.visible = (frame >> 0) & 1;
+    o.invuln--;
+
+    if (o.invuln <= 0) {
+      o.invulnerable = false;
+      o.visible = true;
+      o.invulnfunc();
+    }
+  }
+
+  for (const o of Cmp.movers) {
     o.movefunc(frame);
   }
-  for (const o of speeders) {
+  for (const o of Cmp.speeders) {
     o.posx += o.velx;
     o.posy += o.vely;
   }
-  for (const o of clippers) {
+  for (const o of Cmp.clippers) {
     if (
       o.posx < -o.marginx ||
       o.posy < -o.marginy ||
@@ -183,19 +175,41 @@ function step() {
       o.remove();
   }
 
-  for (let i = 0; i < 1 - VL.mob.size; i++) {
-    Clock(50, 0);
+  // DIFFICULTY INCREASING
+
+  function spawnclocks(howMany, shootChance, steerChance) {
+    for (let i = 0; i < howMany - VL.mob.size; i++) {
+      Clock(shootChance, steerChance);
+    }
   }
 
-  for (const o of deferrers) {
+  if (!win) {
+    if (points >= 500) {
+      win = true;
+      Entity()
+        .hasPos(50, 220)
+        .hasSprite(VL.front, poses.gatto_2, poses.gatto_0);
+      Entity().hasPos(160, 220).hasSprite(VL.front, poses.cake_1, poses.cake_0);
+      //gamesong->stop();
+      //winsong->play() ;
+    } else if (points >= 400) spawnclocks(7, 10, 10);
+    else if (points >= 300) spawnclocks(6, 5, 5);
+    else if (points >= 200) spawnclocks(5, 5, 3.3);
+    else if (points >= 150) spawnclocks(4, 2.5, 2.5);
+    else if (points >= 100) spawnclocks(3, 2.5, 2);
+    else if (points >= 50) spawnclocks(2, 0, 1.6);
+    else spawnclocks(1, 0, 0);
+  }
+
+  for (const o of Cmp.deferrers) {
     o();
   }
-  deferrers.clear();
+  Cmp.deferrers.clear();
 
-  for (const o of removers) {
+  for (const o of Cmp.removers) {
     for (const s of o.sets) s.delete(o);
   }
-  removers.clear();
+  Cmp.removers.clear();
   keytrigs.clear();
 
   frame++;
@@ -207,7 +221,7 @@ function init() {
   win = false;
   Background(0);
   Background(xres);
-  Cat();
+  cat = Cat();
 }
 
 function resize() {
@@ -292,4 +306,4 @@ async function load() {
 
 window.addEventListener("load", load);
 
-export { CL, VL, poses, keystate, keytrigs, entity, rand };
+export { CL, VL, Cmp, poses, keystate, keytrigs, rand, dice, addPoints };

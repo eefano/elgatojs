@@ -1,7 +1,7 @@
 function TXT(gfx, font) {
   function normaltext(text, xo, yo) {
     let x = xo,
-      y = yo;
+      y = yo-font.baseline;
     for (let i = 0; i < text.length; i++) {
       let c = text.charCodeAt(i);
       let g = font.glyphs[c - 32];

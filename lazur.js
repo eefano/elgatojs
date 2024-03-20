@@ -1,4 +1,5 @@
-import { entity, VL, CL, poses } from "./elgato.js";
+import { VL, CL, poses } from "./elgato.js";
+import { Entity } from "./entity.js";
 
 // Wow. Lazur.
 
@@ -20,12 +21,14 @@ function Lazur(posx, posy, dx, dy) {
       dx = 1;
     }
   }
-  let o = entity()
+  let o = Entity()
     .hasPos(posx, posy)
     .hasVel(dx * 8, dy * 8)
     .hasSprite(VL.frf, pose, poses.lazer_0)
     .hasCollision(CL.frf, [CL.mob], () => o.remove())
     .hasBoundary(10, 10);
+
+  return o;
 }
 
 export { Lazur };

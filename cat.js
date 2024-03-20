@@ -1,15 +1,16 @@
-import { entity, VL, CL, poses, keytrigs, keystate } from "./elgato.js";
+import { VL, CL, poses, keytrigs, keystate } from "./elgato.js";
+import { Entity } from "./entity.js";
 import { Lazur } from "./lazur.js";
 
 const jumpbig = [],
-jumpsmall = [];
+  jumpsmall = [];
 for (let i = -20; i < 20; i++) {
-jumpbig.push(60 + (i * i * (220 - 60)) / (20 * 20));
-jumpsmall.push(120 + (i * i * (220 - 120)) / (20 * 20));
+  jumpbig.push(60 + (i * i * (220 - 60)) / (20 * 20));
+  jumpsmall.push(120 + (i * i * (220 - 120)) / (20 * 20));
 }
 
 function Cat() {
-  let o = entity({
+  let o = Entity({
     lives: 9,
     jumping: false,
     crouching: false,
@@ -18,7 +19,17 @@ function Cat() {
   })
     .hasPos(40, 220)
     .hasSprite(VL.cat, poses.gatto_0, poses.gatto_0)
-    .hasInvuln()
+    .hasAnimation((frame) => {
+      if (o.dead) o.pose = poses.gatto_5;
+      else {
+        if (o.jumping) o.pose = poses.gatto_1;
+        else if (o.crouching) o.pose = poses.gatto_4;
+        else {
+          if ((frame >> 3) & 1) o.pose = poses.gatto_2;
+          else o.pose = poses.gatto_3;
+        }
+      }
+    })
     .hasMovement((frame) => {
       if (keytrigs.has(32) && !o.dead) {
         let dx = 0;
@@ -58,18 +69,6 @@ function Cat() {
         o.jumpstart = frame;
       }
 
-      if (o.dead) o.pose = poses.gatto_5;
-      else {
-        if (o.jumping) o.pose = poses.gatto_1;
-        else if (o.crouching) o.pose = poses.gatto_4;
-        else {
-          if ((frame >> 3) & 1) o.pose = poses.gatto_2;
-          else o.pose = poses.gatto_3;
-        }
-      }
-
-      if (o.invulnerable && o.invuln < frame) o.invulnerable = false;
-
       if (o.jumping) {
         let d = frame - o.jumpstart;
         if (d < 40) o.posy = o.jumpcycle[d];
@@ -95,7 +94,22 @@ function Cat() {
 
       if (o.posx > 300) o.posx = 300;
     })
-    .hasCollision(CL.cat, [CL.mob, CL.enf], () => {});
+    .hasCollision(CL.cat, [CL.mob, CL.enf], () => {
+      if (!o.invulnerable && !o.dead) {
+        //hitsound->play();
+        o.lives = o.lives - 1;
+        if (o.lives == 0) {
+          o.dead = true;
+          o.pose = poses.gatto_5;
+          //gamesong->stop();
+          //diesong->play();
+        } else {
+          o.hasInvuln(60, () => {});
+        }
+      }
+    });
+
+  return o;
 }
 
 export { Cat };

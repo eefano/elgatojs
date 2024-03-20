@@ -35,7 +35,7 @@ function GFX_Canvas(canvas) {
     t.btx.globalCompositeOperation = "copy";
     t.btx.drawImage(t.img, 0, 0);
 
-    t.btx.fillStyle = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
+    t.btx.fillStyle = "rgb(" + color[0]*255 + "," + color[1]*255 + "," + color[2]*255 + ")";
     t.btx.globalCompositeOperation = "multiply";
     t.btx.fillRect(0, 0, t.img.width, t.img.height);
 

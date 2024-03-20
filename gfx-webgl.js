@@ -98,9 +98,9 @@ function GFX_Webgl(canvas) {
 
   function tintTexture(name, color) {
     const tex = textures[name];
-    tex.color[0] = color.r;
-    tex.color[1] = color.g;
-    tex.color[2] = color.b;
+    tex.color[0] = color[0];
+    tex.color[1] = color[1]
+    tex.color[2] = color[2];
   }
 
   function untintTexture(name) {
