@@ -4,6 +4,7 @@ import { Entity } from "./entity.js";
 // Wow. Lazur.
 
 function Lazur(posx, posy, dx, dy) {
+  //shotsound->play();
   let pose;
   if (dx == 1) {
     if (dy == 1) pose = poses.lazer_SE;

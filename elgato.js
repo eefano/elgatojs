@@ -219,6 +219,7 @@ function step() {
 function init() {
   points = 0;
   win = false;
+  // gamesong->play();
   Background(0);
   Background(xres);
   cat = Cat();
