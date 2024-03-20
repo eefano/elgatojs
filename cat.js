@@ -1,4 +1,5 @@
 import { VL, CL, poses, keytrigs, keystate } from "./elgato.js";
+import { SFX } from "./sfx.js";
 import { Entity } from "./entity.js";
 import { Lazur } from "./lazur.js";
 
@@ -9,13 +10,14 @@ for (let i = -20; i < 20; i++) {
   jumpsmall.push(120 + (i * i * (220 - 120)) / (20 * 20));
 }
 
-function Cat() {
+function Cat(diefunc) {
   let o = Entity({
     lives: 9,
     jumping: false,
     crouching: false,
     dead: false,
     jumpstart: 0,
+    diefunc: diefunc
   })
     .hasPos(40, 220)
     .hasSprite(VL.cat, poses.gatto_0, poses.gatto_0)
@@ -96,13 +98,12 @@ function Cat() {
     })
     .hasCollision(CL.cat, [CL.mob, CL.enf], () => {
       if (!o.invulnerable && !o.dead) {
-        //hitsound->play();
+        SFX.play('hit.mp3');
         o.lives = o.lives - 1;
         if (o.lives == 0) {
           o.dead = true;
           o.pose = poses.gatto_5;
-          //gamesong->stop();
-          //diesong->play();
+          o.diefunc(o);
         } else {
           o.hasInvuln(60, () => {});
         }

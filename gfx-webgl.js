@@ -1,5 +1,6 @@
 function GFX_Webgl(canvas) {
   let gl = canvas.getContext("webgl");
+  if (!(gl instanceof WebGLRenderingContext)) return undefined;
   let textures = {};
 
   gl.enable(gl.BLEND);
@@ -99,7 +100,7 @@ function GFX_Webgl(canvas) {
   function tintTexture(name, color) {
     const tex = textures[name];
     tex.color[0] = color[0];
-    tex.color[1] = color[1]
+    tex.color[1] = color[1];
     tex.color[2] = color[2];
   }
 
@@ -120,7 +121,7 @@ function GFX_Webgl(canvas) {
     loadTexture,
     tintTexture,
     untintTexture,
-    getTextureSize
+    getTextureSize,
   };
 }
 

@@ -1,10 +1,11 @@
 import { VL, CL, poses } from "./elgato.js";
 import { Entity } from "./entity.js";
+import { SFX } from "./sfx.js";
 
 // Wow. Lazur.
 
 function Lazur(posx, posy, dx, dy) {
-  //shotsound->play();
+  SFX.play('shot.mp3');
   let pose;
   if (dx == 1) {
     if (dy == 1) pose = poses.lazer_SE;

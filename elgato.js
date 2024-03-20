@@ -1,5 +1,6 @@
 import { GFX_Canvas } from "./gfx-canvas.js";
 import { GFX_Webgl } from "./gfx-webgl.js";
+import { SFX } from "./sfx.js";
 import { Entity } from "./entity.js";
 import { TXT } from "./txt.js";
 import { Cat } from "./cat.js";
@@ -48,9 +49,6 @@ function rand(n) {
 function dice(p1000) {
   if (p1000 == 0) return false;
   return Math.random() * 1000 <= p1000;
-}
-function addPoints(n) {
-  points += n;
 }
 
 function Background(xstart) {
@@ -179,19 +177,22 @@ function step() {
 
   function spawnclocks(howMany, shootChance, steerChance) {
     for (let i = 0; i < howMany - VL.mob.size; i++) {
-      Clock(shootChance, steerChance);
+      Clock(shootChance, steerChance, () => {
+        points += 10;
+      });
     }
   }
 
   if (!win) {
     if (points >= 500) {
       win = true;
+
       Entity()
         .hasPos(50, 220)
         .hasSprite(VL.front, poses.gatto_2, poses.gatto_0);
       Entity().hasPos(160, 220).hasSprite(VL.front, poses.cake_1, poses.cake_0);
-      //gamesong->stop();
-      //winsong->play() ;
+      SFX.stopAll();
+      SFX.play("win.mp3");
     } else if (points >= 400) spawnclocks(7, 10, 10);
     else if (points >= 300) spawnclocks(6, 5, 5);
     else if (points >= 200) spawnclocks(5, 5, 3.3);
@@ -201,16 +202,16 @@ function step() {
     else spawnclocks(1, 0, 0);
   }
 
-  for (const o of Cmp.deferrers) {
-    o();
-  }
-  Cmp.deferrers.clear();
-
   for (const o of Cmp.removers) {
     for (const s of o.sets) s.delete(o);
   }
   Cmp.removers.clear();
   keytrigs.clear();
+
+  for (const o of Cmp.deferrers) {
+    o();
+  }
+  Cmp.deferrers.clear();
 
   frame++;
   window.requestAnimationFrame(step);
@@ -219,10 +220,13 @@ function step() {
 function init() {
   points = 0;
   win = false;
-  // gamesong->play();
+  SFX.play("ingame.mp3", true);
   Background(0);
   Background(xres);
-  cat = Cat();
+  cat = Cat(() => {
+    SFX.stopAll();
+    SFX.play("die.mp3");
+  });
 }
 
 function resize() {
@@ -269,8 +273,11 @@ async function load() {
   xres = canvas.width;
   yres = canvas.height;
 
-  gfx = GFX_Canvas(canvas);
-  //gfx = GFX_Webgl(canvas);
+  gfx = GFX_Webgl(canvas);
+  if (gfx === undefined) {
+    console.log("WebGL not available, falling back to HTML5 Canvas");
+    gfx = GFX_Canvas(canvas);
+  }
 
   preload("image", (v, href) => {
     let i = new Image();
@@ -307,4 +314,4 @@ async function load() {
 
 window.addEventListener("load", load);
 
-export { CL, VL, Cmp, poses, keystate, keytrigs, rand, dice, addPoints };
+export { CL, VL, Cmp, poses, keystate, keytrigs, rand, dice };
