@@ -239,13 +239,12 @@ function init() {
 }
 
 function keydown(e) {
+  if(keystate[e.keyCode]) return;
   keystate[e.keyCode] = true;
   keytrigs.add(e.keyCode);
-  return false;
 }
 function keyup(e) {
   keystate[e.keyCode] = false;
-  return false;
 }
 
 async function preload(as, suffix, callback) {
@@ -293,8 +292,8 @@ async function load() {
 
   txt = TXT(gfx, jsons["gamefont.json"]);
 
-  canvas.addEventListener("keydown", keydown, true);
-  canvas.addEventListener("keyup", keyup, true);
+  canvas.addEventListener("keydown", keydown);
+  canvas.addEventListener("keyup", keyup);
 
   document.getElementById("sound_icon").addEventListener("click", () => {
     SFX.setMuted(!SFX.isMuted());
