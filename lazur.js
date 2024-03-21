@@ -27,7 +27,7 @@ function Lazur(posx, posy, dx, dy) {
     .hasPos(posx, posy)
     .hasVel(dx * 8, dy * 8)
     .hasSprite(VL.frf, pose, poses.lazer_0)
-    .hasCollision(CL.frf, [CL.mob], () => o.remove())
+    .hasCollision(CL.frf, () => o.remove())
     .hasBoundary(10, 10);
 
   return o;

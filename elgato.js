@@ -19,16 +19,15 @@ var jsons = {};
 var poses;
 
 const VL = {
-  bkg: new Set(),
-  mob: new Set(),
-  enf: new Set(),
-  cat: new Set(),
-  frf: new Set(),
-  front: new Set(),
+  bkg: new Set(),   // background
+  mob: new Set(),   // enemies
+  enf: new Set(),   // enemy fire
+  cat: new Set(),   // player
+  frf: new Set(),   // player fire
+  hud: new Set(),   // foreground 
 };
 const CL = {
   mob: new Set(),
-  enf: new Set(),
   cat: new Set(),
   frf: new Set(),
 };
@@ -62,7 +61,7 @@ function Background(xstart) {
   return o;
 }
 
-function collisions(oo1) {
+function collisions(oo1, oo2) {
   for (const o1 of oo1) {
     if(!o1.cancollide) continue;
     const a1x = o1.posx + o1.pose.xof - o1.base.xof;
@@ -71,27 +70,22 @@ function collisions(oo1) {
     const b1x = a1x + tx1.x;
     const b1y = a1y + tx1.y;
 
-    for (let i = 0; i < o1.others.length; i++) {
-      const oo2 = o1.others[i];
+    for (const o2 of oo2) {
+      if(!o1.cancollide) continue;
+      const a2x = o2.posx + o2.pose.xof - o2.base.xof;
+      const a2y = o2.posy + o2.pose.yof - o2.base.yof;
+      const tx2 = gfx.getTextureSize(o2.pose.img);
+      const b2x = a2x + tx2.x;
+      const b2y = a2y + tx2.y;
 
-      for (const o2 of oo2) {
-        if(!o2.cancollide) continue;
-        const a2x = o2.posx + o2.pose.xof - o2.base.xof;
-        const a2y = o2.posy + o2.pose.yof - o2.base.yof;
-        const tx2 = gfx.getTextureSize(o2.pose.img);
-        const b2x = a2x + tx2.x;
-        const b2y = a2y + tx2.y;
-
-        if (
-          (a2x - b1x) * (b2x - a1x) < 0.0 &&
-          (a2y - b1y) * (b2y - a1y) < 0.0
-        ) {
-          o1.collision(o2);
-        }
+      if ((a2x - b1x) * (b2x - a1x) < 0.0 && (a2y - b1y) * (b2y - a1y) < 0.0) {
+        o1.collision(o2);
+        o2.collision(o1);
       }
     }
   }
 }
+
 
 function step() {
   let status = "";
@@ -142,9 +136,8 @@ function step() {
 
   // COLLISIONS
 
-  Object.values(CL).forEach((layer) => {
-    collisions(layer);
-  });
+  collisions(CL.cat, CL.mob);
+  collisions(CL.frf, CL.mob);
 
   for (const o of Cmp.flickerers) {
     o.visible = (frame >> 0) & 1;
@@ -190,8 +183,8 @@ function step() {
 
       Entity()
         .hasPos(50, 220)
-        .hasSprite(VL.front, poses.gatto_2, poses.gatto_0);
-      Entity().hasPos(160, 220).hasSprite(VL.front, poses.cake_1, poses.cake_0);
+        .hasSprite(VL.hud, poses.gatto_2, poses.gatto_0);
+      Entity().hasPos(160, 220).hasSprite(VL.hud, poses.cake_1, poses.cake_0);
       SFX.stopAll();
       SFX.play("win.mp3");
     } else if (points >= 400) spawnclocks(7, 10, 10);
@@ -274,7 +267,7 @@ async function load() {
   xres = canvas.width;
   yres = canvas.height;
 
-  gfx = undefined; //GFX_Webgl(canvas);
+  gfx = GFX_Webgl(canvas);
   if (gfx === undefined) {
     console.log("WebGL not available, falling back to HTML5 Canvas");
     gfx = GFX_Canvas(canvas);

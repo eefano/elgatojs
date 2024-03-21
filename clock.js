@@ -23,7 +23,7 @@ function Clock(shootChance, steerChance, pointfunc) {
         o.vely = rand(5) - 2;
       }
     })
-    .hasCollision(CL.mob, [CL.frf, CL.cat], () => {
+    .hasCollision(CL.mob, () => {
       if (!o.invulnerable) {
         SFX.play('boom.mp3');
         o.pointfunc(o);

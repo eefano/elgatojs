@@ -95,7 +95,7 @@ function Cat(xp, yp, diefunc) {
 
       if (o.posx > 300) o.posx = 300;
     })
-    .hasCollision(CL.cat, [CL.mob, CL.enf], () => {
+    .hasCollision(CL.cat, () => {
       if (!o.invulnerable && !o.dead) {
         o.cancollide = false;
         SFX.play('hit.mp3');

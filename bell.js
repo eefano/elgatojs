@@ -15,7 +15,7 @@ function Bell(posx, posy, targetx, targety) {
     .hasPos(posx, posy)
     .hasVel(dx * 4, dy * 4)
     .hasSprite(VL.enf, poses.allarme_1, poses.allarme_0)
-    .hasCollision(CL.enf, [CL.cat], () => o.remove())
+    .hasCollision(CL.mob, () => o.remove())
     .hasBoundary(10, 10);
 
   return o;
