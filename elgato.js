@@ -14,17 +14,18 @@ var frame = 0;
 var points = 0;
 var win = false;
 var cat;
+const walkline = 200;
 
 var jsons = {};
 var poses;
 
 const VL = {
-  bkg: new Set(),   // background
-  mob: new Set(),   // enemies
-  enf: new Set(),   // enemy fire
-  cat: new Set(),   // player
-  frf: new Set(),   // player fire
-  hud: new Set(),   // foreground 
+  bkg: new Set(), // background
+  mob: new Set(), // enemies
+  enf: new Set(), // enemy fire
+  cat: new Set(), // player
+  frf: new Set(), // player fire
+  hud: new Set(), // foreground
 };
 const CL = {
   mob: new Set(),
@@ -41,6 +42,13 @@ const Cmp = {
   animators: new Set(),
 };
 
+function clearSets(...oo) {
+  oo.forEach((o) => o.clear());
+}
+function clearSetObjs(...oo) {
+  oo.forEach((o) => Object.values(o).forEach((set) => set.clear()));
+}
+
 function rand(n) {
   return Math.trunc(Math.random() * n);
 }
@@ -54,16 +62,20 @@ function Background(xstart) {
     .hasPos(xstart, 0)
     .hasSprite(VL.bkg, poses.sfondo_1, poses.sfondo_0)
     .hasMovement(() => {
-      //o.shift++;
+      o.shift++;
       if (o.shift >= xres) o.shift = 0;
       o.posx = xstart - o.shift;
     });
   return o;
 }
 
+function Text(x, y, textfunc, fore, back) {
+  return Entity().hasPos(x, y).hasText(VL.hud, textfunc, fore, back);
+}
+
 function collisions(oo1, oo2) {
   for (const o1 of oo1) {
-    if(!o1.cancollide) continue;
+    if (!o1.cancollide) continue;
     const a1x = o1.posx + o1.pose.xof - o1.base.xof;
     const a1y = o1.posy + o1.pose.yof - o1.base.yof;
     const tx1 = gfx.getTextureSize(o1.pose.img);
@@ -71,7 +83,7 @@ function collisions(oo1, oo2) {
     const b1y = a1y + tx1.y;
 
     for (const o2 of oo2) {
-      if(!o1.cancollide) continue;
+      if (!o1.cancollide) continue;
       const a2x = o2.posx + o2.pose.xof - o2.base.xof;
       const a2y = o2.posy + o2.pose.yof - o2.base.yof;
       const tx2 = gfx.getTextureSize(o2.pose.img);
@@ -86,7 +98,6 @@ function collisions(oo1, oo2) {
   }
 }
 
-
 function step() {
   let status = "";
 
@@ -99,40 +110,11 @@ function step() {
   Object.entries(VL).forEach(([name, layer]) => {
     status += name + ":" + layer.size + " ";
     for (const o of layer) {
-      if (o.visible) {
-        gfx.drawTexture(
-          o.pose.img,
-          o.posx + o.pose.xof - o.base.xof,
-          o.posy + o.pose.yof - o.base.yof
-        );
-      }
+      if (o.visible) o.drawfunc(gfx, txt);
     }
   });
-
-  txt.outlinetext(
-    "A CAT'S DREAM - Use Cursors and Space - crouch to jump higher",
-    25,
-    6,
-    [1, 1, 0],
-    [0.1, 0.1, 0.1]
-  );
-  txt.outlinetext(
-    "Lives: " + cat.lives,
-    10,
-    yres-5,
-    [1.0, 0.5, 0.5],
-    [0.1, 0.1, 0.1]
-  );
   //txt.normaltext("FPS: " + fps,130,236,[0.0,0.0,0.0]);
-  txt.outlinetext(
-    "Points: " + points,
-    240,
-    yres-5,
-    [0.5, 0.5, 1.0],
-    [0.1, 0.1, 0.1]
-  );
-
-  txt.outlinetext(status, 80, yres-5, [1, 1, 0], [0, 0, 0]);
+  //txt.outlinetext(status, 80, yres-5, [1, 1, 0], [0, 0, 0]);
 
   // COLLISIONS
 
@@ -180,13 +162,15 @@ function step() {
   if (!win) {
     if (points >= 500) {
       win = true;
-
+      VL.bkg.forEach((o) => o.hasMovement(() => {}));
+      VL.mob.forEach((o) => o.remove());
+      VL.enf.forEach((o) => o.remove());
+      Text(120, 110, () => "CONGRATS, YOU WIN!", [1, 1, 1], [0, 0, 0]);
       Entity()
-        .hasPos(50, 220)
-        .hasSprite(VL.hud, poses.gatto_2, poses.gatto_0);
-      Entity().hasPos(160, 220).hasSprite(VL.hud, poses.cake_1, poses.cake_0);
+        .hasPos(160, walkline)
+        .hasSprite(VL.mob, poses.cake_1, poses.cake_0);
       SFX.stopAll();
-      SFX.play("win.mp3");
+      SFX.play("win.mp3", true);
     } else if (points >= 400) spawnclocks(7, 10, 10);
     else if (points >= 300) spawnclocks(6, 5, 5);
     else if (points >= 200) spawnclocks(5, 5, 3.3);
@@ -212,35 +196,46 @@ function step() {
 }
 
 function init() {
+  clearSetObjs(VL, CL, Cmp);
   points = 0;
   win = false;
+  SFX.stopAll();
   SFX.play("ingame.mp3", true);
   Background(0);
   Background(xres);
-  cat = Cat(40,200,() => {
+  Text(
+    25,
+    6,
+    () => "A CAT'S DREAM - Use Cursors and Space - crouch to jump higher",
+    [1, 1, 0],
+    [0.1, 0.1, 0.1]
+  );
+  Text(
+    10,
+    yres - 5,
+    () => "Lives: " + cat.lives,
+    [1.0, 0.5, 0.5],
+    [0.1, 0.1, 0.1]
+  );
+  Text(
+    240,
+    yres - 5,
+    () => "Points: " + points,
+    [0.5, 0.5, 1.0],
+    [0.1, 0.1, 0.1]
+  );
+
+  cat = Cat(40, walkline, () => {
+    Text(
+      120,
+      110,
+      () => "GAME OVER, BUT TRY AGAIN!",
+      [1.0, 1.0, 1.0],
+      [0.0, 0.0, 0.0]
+    );
     SFX.stopAll();
-    SFX.play("die.mp3");
+    SFX.play("die.mp3", true);
   });
-}
-
-function resize() {
-  let h = window.innerHeight * window.devicePixelRatio;
-  let w = window.innerWidth * window.devicePixelRatio;
-
-  let kx = (w / xres) >> 0;
-  let ky = (h / yres) >> 0;
-  let k = 1;
-
-  if (kx < ky) {
-    if (kx > 1) k = kx;
-    else k = 1;
-  } else {
-    if (ky > 1) k = ky;
-    else k = 1;
-  }
-
-  canvas.style.width = (xres * k) / window.devicePixelRatio + "px";
-  canvas.style.height = (yres * k) / window.devicePixelRatio + "px";
 }
 
 function keydown(e) {
@@ -254,7 +249,9 @@ function keyup(e) {
 }
 
 async function preload(as, suffix, callback) {
-  let elements = document.querySelectorAll('link[as="' + as + '"][href$="' + suffix + '"]');
+  let elements = document.querySelectorAll(
+    'link[as="' + as + '"][href$="' + suffix + '"]'
+  );
   for (let i = 0; i < elements.length; i++) {
     let href = elements[i].attributes["href"].nodeValue;
     let v = href.substring(5);
@@ -263,7 +260,7 @@ async function preload(as, suffix, callback) {
 }
 
 async function load() {
-  canvas = document.querySelector("#gamecanvas");
+  canvas = document.getElementById("gamecanvas");
   xres = canvas.width;
   yres = canvas.height;
 
@@ -273,7 +270,7 @@ async function load() {
     gfx = GFX_Canvas(canvas);
   }
 
-  preload('image','.png', (v, href) => {
+  preload("image", ".png", (v, href) => {
     let i = new Image();
     i.onload = () => {
       gfx.loadTexture(v, i);
@@ -281,13 +278,13 @@ async function load() {
     i.src = href;
   });
 
-  await preload('fetch','.mp3', async (v, href) => {
+  await preload("fetch", ".mp3", async (v, href) => {
     const res = await fetch(href);
     const buf = await res.arrayBuffer();
     SFX.load(v, buf);
   });
 
-  await preload('fetch','.json', async (v, href) => {
+  await preload("fetch", ".json", async (v, href) => {
     const res = await fetch(href);
     jsons[v] = await res.json();
   });
@@ -296,16 +293,17 @@ async function load() {
 
   txt = TXT(gfx, jsons["gamefont.json"]);
 
-  resize();
-  canvas.focus();
-
   canvas.addEventListener("keydown", keydown, true);
   canvas.addEventListener("keyup", keyup, true);
-  window.addEventListener("resize", resize);
 
-  document.querySelector("#sound_icon").addEventListener("click", ()=>{
-    console.log("toggle mute");
+  document.getElementById("sound_icon").addEventListener("click", () => {
     SFX.setMuted(!SFX.isMuted());
+  });
+  document.getElementById("music_icon").addEventListener("click", () => {
+    SFX.setLoopMuted(!SFX.isLoopMuted());
+  });
+  document.getElementById("restart_icon").addEventListener("click", () => {
+    init();
   });
 
   init();

@@ -23,8 +23,19 @@ function Entity(o = {}) {
 
   o.hasSprite = (layer, pose, base) => {
     o.visible = true;
+    o.drawfunc = (gfx, txt) => gfx.drawTexture(
+      o.pose.img,
+      o.posx + o.pose.xof - o.base.xof,
+      o.posy + o.pose.yof - o.base.yof
+    );
     o.pose = pose;
     o.base = base;
+    return o.inSet(layer);
+  };
+
+  o.hasText = (layer, textfunc, fore, back) => {
+    o.visible = true;
+    o.drawfunc = (gfx, txt) => txt.outlinetext(textfunc(), o.posx, o.posy, fore, back);
     return o.inSet(layer);
   };
 

@@ -1,10 +1,11 @@
 let context;
-let gain;
+let gain, loopgain;
 
 let sounds = {};
 let playing = new Set();
 let looping = new Set();
 let muted = true;
+let loopmuted = false;
 let initialized = false;
 
 let SFX = {
@@ -16,7 +17,7 @@ let SFX = {
     if (initialized) {
       const source = context.createBufferSource();
       source.buffer = a.audiobuffer;
-      source.connect(gain);
+      source.connect(looped ? loopgain : gain);
       source.loop = looped;
       source.onended = () => { playing.delete(source); }
       source.start();
@@ -26,7 +27,6 @@ let SFX = {
   },
   stopAll: function () {
     if (initialized) {
-      console.log(playing);
       for (const source of playing) {
         source.stop(0);
       }
@@ -39,13 +39,16 @@ let SFX = {
       context = new AudioContext();
       gain = context.createGain();
       gain.connect(context.destination);
+      loopgain = context.createGain();
+      loopgain.connect(gain);
+      loopgain.gain.value = loopmuted ? 0 : 1;
 
       Object.values(sounds).forEach(async (a) => {
         a.audiobuffer = await context.decodeAudioData(a.rawbuffer);
         if (looping.has(a)) {
           const source = context.createBufferSource();
           source.buffer = a.audiobuffer;
-          source.connect(gain);
+          source.connect(loopgain);
           source.onended = () => { playing.delete(source); }
           source.loop = true;
           source.start();
@@ -58,6 +61,16 @@ let SFX = {
   },
   isMuted: function () {
     return muted;
+  },
+  setLoopMuted: function(m) {
+    loopmuted = m;
+    if(initialized)
+    {
+      loopgain.gain.value = loopmuted ? 0 : 1;
+    }
+  },
+  isLoopMuted: function () {
+    return loopmuted;
   },
 };
 

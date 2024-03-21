@@ -1,65 +1,101 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>El Gato</title>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" type="text/css" media="all" href="elgato.css" />
-    
-        <link rel="prefetch" href="data/layers.json" as="fetch" />
-        <link rel="prefetch" href="data/gamefont.json" as="fetch" />
 
-        <link rel="preload" href="data/gamefont.png" as="image" />
+<head>
+  <title>El Gato</title>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" type="text/css" media="all" href="elgato.css" />
 
-        <link rel="preload" href="data/placeholder.png" as="image" />
-        <link rel="preload" href="data/sfondo.png" as="image" />
-        <link rel="preload" href="data/cake_1.png" as="image" />
-        <link rel="preload" href="data/allarme_1.png" as="image" />
+  <link rel="prefetch" href="data/layers.json" as="fetch" />
+  <link rel="prefetch" href="data/gamefont.json" as="fetch" />
 
-        <link rel="preload" href="data/sveglia_1.png" as="image" />
-        <link rel="preload" href="data/sveglia_2.png" as="image" />
+  <link rel="preload" href="data/gamefont.png" as="image" />
 
-        <link rel="preload" href="data/gatto_1.png" as="image" />
-        <link rel="preload" href="data/gatto_2.png" as="image" />
-        <link rel="preload" href="data/gatto_3.png" as="image" />
-        <link rel="preload" href="data/gatto_4.png" as="image" />
-        <link rel="preload" href="data/gatto_5.png" as="image" />
+  <link rel="preload" href="data/placeholder.png" as="image" />
+  <link rel="preload" href="data/sfondo.png" as="image" />
+  <link rel="preload" href="data/cake_1.png" as="image" />
+  <link rel="preload" href="data/allarme_1.png" as="image" />
 
-        <link rel="preload" href="data/lazer_E.png" as="image" />
-        <link rel="preload" href="data/lazer_N.png" as="image" />
-        <link rel="preload" href="data/lazer_NE.png" as="image" />
-        <link rel="preload" href="data/lazer_NO.png" as="image" />
-        <link rel="preload" href="data/lazer_O.png" as="image" />
-        <link rel="preload" href="data/lazer_S.png" as="image" />
-        <link rel="preload" href="data/lazer_SE.png" as="image" />
-        <link rel="preload" href="data/lazer_SO.png" as="image" />
+  <link rel="preload" href="data/sveglia_1.png" as="image" />
+  <link rel="preload" href="data/sveglia_2.png" as="image" />
 
-        <link rel="prefetch" href="data/boom.mp3" as="fetch" />
-        <link rel="prefetch" href="data/hit.mp3" as="fetch" />
-        <link rel="prefetch" href="data/ring.mp3" as="fetch" />
-        <link rel="prefetch" href="data/shot.mp3" as="fetch" />
-        <link rel="prefetch" href="data/ingame.mp3" as="fetch" />
-        <link rel="prefetch" href="data/win.mp3" as="fetch" />
-        <link rel="prefetch" href="data/die.mp3" as="fetch" />
+  <link rel="preload" href="data/gatto_1.png" as="image" />
+  <link rel="preload" href="data/gatto_2.png" as="image" />
+  <link rel="preload" href="data/gatto_3.png" as="image" />
+  <link rel="preload" href="data/gatto_4.png" as="image" />
+  <link rel="preload" href="data/gatto_5.png" as="image" />
 
-        <script type="module" src="elgato.js" ></script>
+  <link rel="preload" href="data/lazer_E.png" as="image" />
+  <link rel="preload" href="data/lazer_N.png" as="image" />
+  <link rel="preload" href="data/lazer_NE.png" as="image" />
+  <link rel="preload" href="data/lazer_NO.png" as="image" />
+  <link rel="preload" href="data/lazer_O.png" as="image" />
+  <link rel="preload" href="data/lazer_S.png" as="image" />
+  <link rel="preload" href="data/lazer_SE.png" as="image" />
+  <link rel="preload" href="data/lazer_SO.png" as="image" />
 
-        <script type="text/javascript">
-            function fullscreenClick()
-            {
-                if(document.fullscreenElement) document.exitFullscreen()
-                else document.documentElement.requestFullscreen();
-            }
-        </script>
-    </head>
-    <body>      
-        <img class="circle" id="fullscreen_icon" src="ui/fullscreen.svg" onclick="fullscreenClick()">
-        <img class="circle" id="restart_icon" src="ui/restart.svg">
-        <img class="circle" id="sound_icon" src="ui/sound_off.svg">
-        <img class="circle" id="music_icon" src="ui/music_on.svg">
-        <img class="circle" id="dpad_icon" src="ui/dpad.svg">
-        <img class="circle" id="a_icon" src="ui/button.svg">
-        <img class="circle" id="b_icon" src="ui/button.svg">
-        
-        <canvas id="gamecanvas" width="320" height="216" tabindex="1"></canvas>
-    </body>
+  <link rel="prefetch" href="data/boom.mp3" as="fetch" />
+  <link rel="prefetch" href="data/hit.mp3" as="fetch" />
+  <link rel="prefetch" href="data/ring.mp3" as="fetch" />
+  <link rel="prefetch" href="data/shot.mp3" as="fetch" />
+  <link rel="prefetch" href="data/ingame.mp3" as="fetch" />
+  <link rel="prefetch" href="data/win.mp3" as="fetch" />
+  <link rel="prefetch" href="data/die.mp3" as="fetch" />
+
+  <script type="module" src="elgato.js"></script>
+
+  <script type="text/javascript">
+
+    function refocus() {
+      document.getElementById("gamecanvas").focus();
+    }
+
+    function resize() {
+      canvas = document.getElementById("gamecanvas");
+
+      let h = window.innerHeight * window.devicePixelRatio;
+      let w = window.innerWidth * window.devicePixelRatio;
+
+      let kx = (w / canvas.width) >> 0;
+      let ky = (h / canvas.height) >> 0;
+      let k = 1;
+
+      if (kx < ky) {
+        if (kx > 1) k = kx;
+        else k = 1;
+      } else {
+        if (ky > 1) k = ky;
+        else k = 1;
+      }
+
+      canvas.style.width = (canvas.width * k) / window.devicePixelRatio + "px";
+      canvas.style.height = (canvas.height * k) / window.devicePixelRatio + "px";
+    }
+    function fullscreenClick() {
+      if (document.fullscreenElement) document.exitFullscreen()
+      else document.documentElement.requestFullscreen();
+      refocus();
+    }
+    function toggleClick(name, show = false) {
+      let i = document.getElementById(name + "_icon");
+      i.src = i.src.endsWith('_off.svg') ? 'ui/' + name + '_on.svg' : 'ui/' + name + '_off.svg';
+      if (show)
+        document.getElementById(show + "_icon").style.visibility = i.src.endsWith('_off.svg') ? 'hidden' : 'visible';
+      refocus();
+    }
+  </script>
+</head>
+
+<body onload="resize();refocus()" onresize="resize()">
+  <img class="circle" id="fullscreen_icon" src="ui/fullscreen.svg" onclick="fullscreenClick()">
+  <img class="circle" id="restart_icon" src="ui/restart.svg" onclick="refocus()">
+  <img class="circle" id="sound_icon" src="ui/sound_off.svg" onclick="toggleClick('sound','music')">
+  <img class="circle" id="music_icon" src="ui/music_on.svg" onclick="toggleClick('music')">
+  <img class="circle" id="dpad_icon" src="ui/dpad.svg">
+  <img class="circle" id="a_icon" src="ui/button.svg">
+  <img class="circle" id="b_icon" src="ui/button.svg">
+
+  <canvas id="gamecanvas" width="320" height="216" tabindex="1"></canvas>
+</body>
+
 </html>

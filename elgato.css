@@ -1,6 +1,6 @@
 body
 {
-    background-color: #404040;
+    background-color: black;
     margin: 0;
 
     touch-action: none;
@@ -8,7 +8,7 @@ body
 
 #gamecanvas
 {
-    background: black;
+    background-color: #404040;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 	/*image-rendering: -moz-crisp-edges;
@@ -73,7 +73,7 @@ body
 }
 
 img.circle {
-    background: #C0C0C0;
+    background-color: #707070;
     -moz-border-radius: 50px;
     -webkit-border-radius: 50px;
     border-radius: 50px;
