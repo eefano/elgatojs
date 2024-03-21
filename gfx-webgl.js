@@ -1,7 +1,9 @@
 function GFX_Webgl(canvas) {
-  let gl = canvas.getContext("webgl");
+  let gl =
+    canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
   if (!(gl instanceof WebGLRenderingContext)) return undefined;
   let textures = {};
+  let uniforms = {};
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -41,6 +43,12 @@ function GFX_Webgl(canvas) {
   gl.linkProgram(program);
   gl.useProgram(program);
 
+  uniforms["uOff"] = gl.getUniformLocation(program, "uOff");
+  uniforms["uCol"] = gl.getUniformLocation(program, "uCol");
+  uniforms["uSiz"] = gl.getUniformLocation(program, "uSiz");
+  uniforms["uTwh"] = gl.getUniformLocation(program, "uTwh");
+  uniforms["uTxy"] = gl.getUniformLocation(program, "uTxy");
+
   let vertexArray = new Float32Array([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0]);
 
   let vertexBuffer = gl.createBuffer();
@@ -65,19 +73,11 @@ function GFX_Webgl(canvas) {
   function drawSubTexture(name, sx, sy, sw, sh, dx, dy) {
     const tex = textures[name];
     gl.bindTexture(gl.TEXTURE_2D, tex.id);
-    gl.uniform2f(gl.getUniformLocation(program, "uOff"), dx, dy);
-    gl.uniform4fv(gl.getUniformLocation(program, "uCol"), tex.color);
-    gl.uniform2f(gl.getUniformLocation(program, "uSiz"), sw, sh);
-    gl.uniform2f(
-      gl.getUniformLocation(program, "uTwh"),
-      sw / tex.size.x,
-      sh / tex.size.y
-    );
-    gl.uniform2f(
-      gl.getUniformLocation(program, "uTxy"),
-      sx / tex.size.x,
-      sy / tex.size.y
-    );
+    gl.uniform2f(uniforms["uOff"], dx, dy);
+    gl.uniform4fv(uniforms["uCol"], tex.color);
+    gl.uniform2f(uniforms["uSiz"], sw, sh);
+    gl.uniform2f(uniforms["uTwh"], sw / tex.size.x, sh / tex.size.y);
+    gl.uniform2f(uniforms["uTxy"], sx / tex.size.x, sy / tex.size.y);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
