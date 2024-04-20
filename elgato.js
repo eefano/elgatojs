@@ -83,7 +83,7 @@ function collisions(oo1, oo2) {
     const b1y = a1y + tx1.y;
 
     for (const o2 of oo2) {
-      if (!o1.cancollide) continue;
+      if (!o2.cancollide) continue;
       const a2x = o2.posx + o2.pose.xof - o2.base.xof;
       const a2y = o2.posy + o2.pose.yof - o2.base.yof;
       const tx2 = gfx.getTextureSize(o2.pose.img);
